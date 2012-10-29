@@ -128,14 +128,16 @@ class Action {
         #   编译文件路径
         $comple_file = joinp(C('DIR_DIR'), C('DIR_APP'),$tplconf['COMPILE_DIR'],str_replace('/','_',$tplpath) .'.php');
         
-        switch( C('SET_TPL_THEME') ){
+        switch( C('SET_TPL_ENGINE') ){
         
             case 'default' :
                 #   处理引用
                 $readtpl = preg_replace_callback('/'.$tplconf['LEFT_DELIMITER'].'\s?include\s+([^}]*)\s?'.$tplconf['RIGHT_DELIMITER'].'/', array('self','fetch_inc_callback'), $readtpl );
                 #   处理变量
-                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo $2; ?>',$readtpl);
-                if( $isInc == false ){
+                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(\s*\$.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo $2; ?>',$readtpl);
+                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php $2 ?>',$readtpl);
+				
+				if( $isInc == false ){
                     @file_put_contents( $comple_file , $readtpl );
                     extract($tpldata);
                     $readtpl = include( $comple_file);
@@ -339,9 +341,7 @@ class MysqlModel extends Model{
         }
         return $this;
     }
-    
 }
-
 
 #   效率函数
 function dump ($arg) { @header("Content-type:text/html"); echo '<pre>'; var_dump($arg) ; echo '</pre>' ; }
@@ -354,12 +354,13 @@ function joinp() {
     $paths = array_map(create_function('$p', 'return trim($p,"/");'), $args);return ( preg_match('/^\//',$args[0]) ? '/' : '' ).join('/', $paths);
 }
 function O2A($o){ $r = array(); if(!is_array($o)){ if($var = get_object_vars($o)){ foreach($var as $key => $value){ $r[$key] = O2A($value); } } else{ return $obj; } } else{ foreach($o as $key => $value){ $r[$key] = O2A($value); } } return $r; }
+
 #   快捷方式
 function A( $n ){ return is_null($n) ? ooxx::mod( C('DEF_MOD') ) : ooxx::mod( $n ); }
 function C( $n = NULL,$v = NULL ){
     return ($v == NULL ) ? ( ooxx::get($n) !== Null ? ooxx::get($n) : ooxx::$setCfgs[$n] ) : ( ooxx::get($n) && preg_match('/^SET_/',$n) ? ooxx::set($n,$v) : ooxx::$setCfgs[$n] = $v );
 }
 function M( $table = Null, $type = Null ){ return Model::getInstace( $table , $type); }
-function I( $n=Null ){ return include_once(joinp( ooxx::get('DIR_APP'),'inc',$n.'.class.php' )); }
+function I( $n=Null ){ return include_once(joinp( C('DIR_APP'), C('DIR_INC'),$n.'.class.php' )); }
 
 return new ooxx;
