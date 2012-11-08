@@ -108,7 +108,13 @@ class Action {
         }
         else{
              header('HTTP/1.1 404 Not Found');
-             die(  $this->mod_name.'->'.$this->fun_name.' is not found.');
+			
+			 if( file_exists( joinp(C('DIR_DIR'), C('DIR_APP'), C('DIR_TPL'), $this->tplpath( Null,$this->mod_name,$do) ) ) ){
+				$this->fun_name = $do;
+				$this->display();
+			 }else{
+				die(  $this->mod_name.'->'.$do.' is not found.');
+			 }
         }
     }
     
@@ -122,19 +128,19 @@ class Action {
         #   模板配置
         $tplconf = C('SET_TPL_CONF');
         #   数据赋值
-        $tpldata = $this->tpl_vars;
+        $tpldata = (array)$this->tpl_vars;
         #   原始模板文件
         $readtpl = Action::readtpl( joinp(C('DIR_DIR'), C('DIR_APP'), C('DIR_TPL'),$tplpath) );
         #   编译文件路径
         $comple_file = joinp(C('DIR_DIR'), C('DIR_APP'),$tplconf['COMPILE_DIR'],str_replace('/','_',$tplpath) .'.php');
         
         switch( C('SET_TPL_ENGINE') ){
-        
+
             case 'default' :
                 #   处理引用
                 $readtpl = preg_replace_callback('/'.$tplconf['LEFT_DELIMITER'].'\s?include\s+([^}]*)\s?'.$tplconf['RIGHT_DELIMITER'].'/', array('self','fetch_inc_callback'), $readtpl );
                 #   处理变量
-                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(\s*\$.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo $2; ?>',$readtpl);
+                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')\s*\$([^>]*);?\s*('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo \$$2; ?>',$readtpl);
                 $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php $2 ?>',$readtpl);
 				
 				if( $isInc == false ){
@@ -224,10 +230,6 @@ class MysqlModel extends Model{
     #   有条件的显示错误信息
     private function error($msg){ echo '<p><b>Mysql Error</b> '.( C('DEV_MOD') ?   $msg . mysql_error() : $msg ).'</p>';}
     
-    function test(){
-        ddump($this);
-    }
-    
     #   自动构建SQL
     function __call( $do,$args = array() ){
 	
@@ -236,13 +238,16 @@ class MysqlModel extends Model{
 		
             #   执行查询，参数必须为 String , 非查询操作将返回 Boolean 查询操作将返回表结构的数组
             case 'query':
-				if( $this->opt['debug'] ){ dump( $first ); }
+				if( $this->opt['debug'] ){ ddump( $first ); }
                 $this->query_result = @mysql_query($first, $this->connect_id);
+				#	每次查询过后清理查询参数条件
+				$this->opt = array();
                 if(!$this->query_result){ return $this->error('SQL查询错误！');}
                 if( is_resource( $this->query_result ) ){
                     while( $row = mysql_fetch_assoc( $this->query_result )) { $result[] = $row; }
                     return $result;
                 }
+				
                 return $this->query_result;
             break;
 			
@@ -251,9 +256,21 @@ class MysqlModel extends Model{
                 $this->opt['table'] = '`'.C('SET_DB_PREFIX').$first.'`';
             break;
 			
+			#	设置查询条件
+			case 'where':
+				#	目前只支持数组and关联
+				if( is_string($first) ){
+					$this->opt[$do] = $first;
+				}else if( is_array($first) ) {
+					foreach ( $first as $k => $v) {
+						$kvs[] = '`'.addslashes($k).'` = \''.addslashes($v).'\''; 
+					}
+					$this->opt[$do] = implode(' and ',$kvs);
+				}
+			break;
             // #   设置SQL：字段、条件、长度限制、分组，默认处理中已处理
             // case 'field':	#	'id,name'
-            // case 'where':	#	'a=b and c=d'
+           
             // case 'limit':	#	'1' , '1,2'
             // case 'group':	#	'a'
             // case 'order':	#	'b asc'
@@ -356,7 +373,7 @@ function joinp() {
 function O2A($o){ $r = array(); if(!is_array($o)){ if($var = get_object_vars($o)){ foreach($var as $key => $value){ $r[$key] = O2A($value); } } else{ return $obj; } } else{ foreach($o as $key => $value){ $r[$key] = O2A($value); } } return $r; }
 
 #   快捷方式
-function A( $n ){ return is_null($n) ? ooxx::mod( C('DEF_MOD') ) : ooxx::mod( $n ); }
+function A( $n = NULL ){ return is_null($n) ? ooxx::mod( C('DEF_MOD') ) : ooxx::mod( $n ); }
 function C( $n = NULL,$v = NULL ){
     return ($v == NULL ) ? ( ooxx::get($n) !== Null ? ooxx::get($n) : ooxx::$setCfgs[$n] ) : ( ooxx::get($n) && preg_match('/^SET_/',$n) ? ooxx::set($n,$v) : ooxx::$setCfgs[$n] = $v );
 }
