@@ -140,9 +140,9 @@ class Action {
                 #   处理引用
                 $readtpl = preg_replace_callback('/'.$tplconf['LEFT_DELIMITER'].'\s?include\s+([^}]*)\s?'.$tplconf['RIGHT_DELIMITER'].'/', array('self','fetch_inc_callback'), $readtpl );
                 #   处理变量
-                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')\s*\$([^>]*);?\s*('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo \$$2; ?>',$readtpl);
-                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')(.*)('.$tplconf['RIGHT_DELIMITER'].')/','<?php $2 ?>',$readtpl);
-				
+                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')\s*\$(.*?);?\s*('.$tplconf['RIGHT_DELIMITER'].')/','<?php echo \$$2; ?>',$readtpl);		
+				#	原样输出
+                $readtpl = preg_replace('/('.$tplconf['LEFT_DELIMITER'].')\s*(.*?);?\s*('.$tplconf['RIGHT_DELIMITER'].'){1}/','<?php $2; ?>',$readtpl);
 				if( $isInc == false ){
                     @file_put_contents( $comple_file , $readtpl );
                     extract($tpldata);
@@ -253,7 +253,16 @@ class MysqlModel extends Model{
 			
             #   设置SQL：表名
             case 'table':
-                $this->opt['table'] = '`'.C('SET_DB_PREFIX').$first.'`';
+				if( count(explode(',',$first))>1 ){
+					$_tableA = explode(',',$first);
+				}else{
+					$_tableA[] = $first;
+				}
+				foreach( $_tableA as $item ){
+					$tableMap = preg_split('/(\s+as\s+|\s+)/i',trim($item));
+					$_tableB[] = '`'.C('SET_DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
+				}
+				$this->opt['table'] = implode( ' , ',$_tableB );
             break;
 			
 			#	设置查询条件
@@ -263,7 +272,7 @@ class MysqlModel extends Model{
 					$this->opt[$do] = $first;
 				}else if( is_array($first) ) {
 					foreach ( $first as $k => $v) {
-						$kvs[] = '`'.addslashes($k).'` = \''.addslashes($v).'\''; 
+						$kvs[] = '`'.addslashes($k).'` = '. ( is_int( $v ) ?  $v : '\''.addslashes($v).'\'' );
 					}
 					$this->opt[$do] = implode(' and ',$kvs);
 				}
@@ -329,6 +338,10 @@ class MysqlModel extends Model{
             #   执行：查，默认：LIMIT 1
             case 'find':
 				return $this->findAll( $first ? $first : '1' );
+			break;
+			case 'find0':
+				$data =  $this->findAll( $first ? $first : '1' );
+				return is_array($data) ? $data[0] : $data;
 			break;
 			#   执行：查，默认所有
             case 'findAll':
