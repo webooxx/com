@@ -189,11 +189,7 @@ class Model{
         #   缓存模型对象，免得每次都新建一个
         $instace =  Model::$instaces[$engine] ?  Model::$instaces[$engine] : Model::$instaces[$engine] = new $engine;
         return $instace->table($table);
-    }
-    //function table($table){ $this->opt['table'] = C('SET_DB_PREFIX').$table; return $this;}
-    
-    
-    
+    } 
 }
 
 #   MYSQL数据模型类
@@ -372,6 +368,166 @@ class MysqlModel extends Model{
         return $this;
     }
 }
+
+#   CSV数据模型类
+class CsvModel extends Model{
+    public  $opt = array();
+
+    function __construct(){}
+	
+	//创建数据表
+	function create( $fields = false , $table =  false ){
+		$fields = $fields ? $fields : $this->opt['fields'];
+		$table  = $table  ? $table  : $this->opt['table'];
+		$success  = false;
+		if( !file_exists($table) ){
+			
+			$handle  =   @fopen( $table, 'w') ;
+			if( $handle ){
+				fputcsv( $handle ,  $fields ); 
+				$success  = true;
+			}
+			fclose($handle);
+
+		}
+		return $success;
+	}
+	//删除数据表
+	function drop( $table = false ){
+		$table  = $table  ? $table  : $this->opt['table'];
+		fclose( $this->opt['handle'] );
+		return unlink( $table );
+	}
+	function __call( $do,$args = array() ){
+        $first = $args[0];
+        switch ( $do ) {
+			case 'table':
+				#	设置数据文件
+				if( count($this->opt) > 0 ){
+					@fclose($this->opt['handle']);
+					$this->opt = array();
+				}
+				$this->opt['table']  = joinp( _DIR_, C('SET_DB_PREFIX') , $first .'.csv' );
+				$this->opt['path']   = joinp( _DIR_, C('SET_DB_PREFIX') );
+				$this->opt['handle'] = @fopen($this->opt['table'],'r+');
+				if( $this->opt['handle'] ){
+					$this->opt['fields'] = fgetcsv( $this->opt['handle'] );
+				}
+			break;
+			case 'find' :
+
+				$field = is_array( $this->opt['field'] ) ?  $this->opt['field']  : $this->opt['fields'];
+				$limit = is_int( $this->opt['limit'] ) ? $this->opt['limit'] : 1 ;
+				
+				#	得到记录
+				while ( $data = fgetcsv(  $this->opt['handle'] ) ) {
+					foreach( $data as $k => $v ){
+						$_row[ $this->opt['fields'][$k] ] = $v;
+					}
+					#	条件限制
+					if( $this->dowhere( $_row ) ){ 
+						$_rs[] = $_row;
+					}
+					#	长度限制
+					if(  count($_rs) >= $limit  ){ break; }
+				}
+				#	字段过滤
+				foreach( $_rs as $_row ){
+					foreach( $field as $item ){ $row[$item] = $_row[$item]; }
+					$rs[] = $row;
+				}
+				return  $rs ;
+			break;
+			case 'count' :
+				#	第一行为字段所以起始的值需要为-1；
+				$line = -1;
+				$handle =$this->opt['handle'];
+				fseek( $this->opt['handle'] , 0);
+				while ( fgets(  $handle ) ) { $line++;}
+				return  $line;
+			break;
+			case 'add':
+				#	如果第一列是ID，则自动增加
+				foreach( $this->opt['fields'] as $k => $v ){
+					if( empty($first[$v]) ){
+						$data[] =  ( $v=='id' ) ? $this->count()+1:"";
+					}else{
+						$data[] = $first[$v];
+					}
+				}
+				fseek( $this->opt['handle'] ,0,SEEK_END );
+				return fputcsv( $this->opt['handle'],$data );
+			break;
+			case 'save':
+				$hasChange = false;
+				$handle   = $this->opt['handle'];
+				#	临时数据文件
+				$tempFile = joinp( $this->opt['path'],'saveTemp'.time() );
+				$_handle  = fopen( $tempFile, 'w');
+				fputcsv( $_handle ,  $this->opt['fields'] ); 
+				#	得到行数据
+				while ( $row = fgetcsv(  $handle ) ) {
+					#	把行数据加上键，用于条件过滤
+					foreach( $row as $k => $v ){  $_row[ $this->opt['fields'][$k] ] = $v; }
+					#	根据条件，输出合并后的数据或者是原始数据
+					if( $this->dowhere($_row) ){
+						$hasChange = true;
+						if( is_array( $first ) ){
+							fputcsv( $_handle , array_merge( $_row ,$first) ); 
+						}
+					}else{
+						fputcsv( $_handle , $row);
+					}
+				}
+				#	关闭临时文件
+				fclose( $_handle );
+				if( $hasChange ){ 
+					fclose( $handle );
+					unlink( $this->opt['table'] );
+					rename( $tempFile ,$this->opt['table']);
+				}else{
+					unlink( $tempFile );
+				}
+				return $hasChange;
+			break;
+			case 'delete':
+				return $this->save(-1);
+			break;
+			case 'where':
+				#	条件限制 = < > ，多条件连接符  and or
+				#	目前只支持一个 等于
+				preg_match('/(.*)([=<>])(.*)/',$first,$match);
+				$this->opt['where'] = array('key'=> trim($match[1]), 'op'=>$match[2],'val'=>trim($match[3]));
+			break;
+			case 'field' :
+				$this->opt['field'] = explode(',',$first) ;
+			break;
+			default:
+				#	where
+                $this->opt[$do] = $first;
+            break;
+		}
+		return $this;
+	
+	}
+	function dowhere( $row ){
+		$where = $this->opt['where'];
+		switch ( $where['op'] ){
+			case '=' :
+				return $row[$where['key']] == $where['val'];
+			break;
+			case '>' :
+				return $row[$where['key']] > $where['val'];
+			break;
+			case '<' :
+				return $row[$where['key']] < $where['val'];
+			break;
+		}
+		return false;
+	}
+	
+}
+
 
 #   效率函数
 function dump ($arg) { @header("Content-type:text/html"); echo '<pre>'; var_dump($arg) ; echo '</pre>' ; }
