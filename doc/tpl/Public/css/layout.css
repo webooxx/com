@@ -1,0 +1,113 @@
+
+/*-------------------------------------------
+   LAYOUT
+--------------------------------------------*/ 
+#wrap {
+	position: relative;
+	text-align: left;
+	background:#EEE;
+}
+#content {}
+#header {
+    height: 32px;
+    background: #6BA81E;
+    line-height: 32px;
+    padding-left: 10px;
+    font-size: 14px;
+    color:#fff;
+    text-shadow:0px 1px 0px #444;
+}
+
+#header a {
+    color: #fff;
+    text-decoration: none;
+}
+
+#header a:hover {
+    text-decoration: underline;
+}
+
+/* Main Column */
+#main  {
+	float: right;
+	width:100%;
+	margin: 0 0 0 -230px;
+}
+#dir ,#art {
+	margin: 0 0 0 230px;
+	background: white;
+	padding: 10px;
+}
+
+#dir  h3{
+	border-bottom: 1px solid #9A9B98;
+	color: #606060;
+	background:none;
+	
+}
+
+#dir ul{ list-style-type: none;padding:0px;margin:0px; }
+#dir li{
+    float: left;
+    line-height: 1.2;
+    margin-bottom: 10px;
+	width: 30%;
+	list-style-type: none;
+}
+#dir li a { cursor: pointer;  display: block; height: 30px; width: 80%;padding:0 10%}
+#dir span{ color: #595959;  font-size: 12px;}
+
+#dir_dirs li{ width: 13.5%; text-align: center;}
+#dir_dirs li a{ background: url(../img/folder_32.png) no-repeat scroll center 6px #FFFFFF; height: 60px; padding-top: 40px;}
+#dir_dirs li a:hover { background-color: #caddeb; border-radius:5px;}
+#dir_imgs li  { width: 155px;  margin-bottom: 20px;}
+#dir_imgs li a{ width: 120px;height:120px;background:#fff;border-radius:5px;padding:5px;overflow:hidden }
+#dir_imgs li a:hover{  background-color: #f4f4f4; }
+
+
+#sidebar {
+	float: left;
+	width: 230px;	
+}
+#sidebar   h3 {
+	font-size: 18px;
+	background: #DDD;
+	color: #222;
+	margin:  0 0 5px 0;
+	padding: 5px 10px;
+	text-shadow: 1px 1px 0 white;
+}
+#sidebar  ul {
+	list-style-type: none;
+	padding: 0 0 10px 10px;
+	margin: 0;
+	font-size: 14px;
+}
+#sidebar  a{
+	padding-left: 5px;
+	display: block;
+}
+#sidebar a:hover {
+   background:#F7F7F7;
+   text-decoration: underline;
+}
+
+/* footer */
+#footer {
+	clear: both;
+	margin: 0;
+	padding: 10px 0 5px 0;
+	background: #CCC url(footer-bottom.gif) no-repeat left top;			
+	font-family: 'Trebuchet MS', 'Helvetica Neue', Arial, Sans-serif;
+	font-size: 0.95em;
+	color: #777;	
+	text-align: center;	
+	letter-spacing: .2px;
+}
+#footer p {
+	padding:10px 0;
+}
+#footer a:hover { 
+	color: #555; 
+	text-decoration: none;
+}
