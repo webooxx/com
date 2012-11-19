@@ -23,6 +23,7 @@ class ooxx {
         'DIR_ACT'=> 'act',                   #  项目程序-模块文件目录
         'DIR_TPL'=> 'tpl',                   #  项目程序-模板文件目录
         'DIR_INC'=> 'inc',                   #  项目程序-引用文件目录
+        'DIR_COM'=> 'comple',                   #  项目程序-模板编译目录
         
         'SET_TPL_THEME' => 'default',    #  模板主题目录
         'SET_TPL_ENGINE'=> 'default',    #  模板引擎类型
@@ -44,8 +45,7 @@ class ooxx {
         #    模板参数设置，默认
         'SET_TPL_CONF' =>array(
             'LEFT_DELIMITER'  => '<!--{',
-            'RIGHT_DELIMITER' => '}-->',
-            'COMPILE_DIR'     => 'comple'
+            'RIGHT_DELIMITER' => '}-->'
         ),
         
         'CMD_MOD'   => false,            #    命令行模式，默认为fasle，此模式下，所有参数被挂到 $_GET 对象上
@@ -132,7 +132,7 @@ class Action {
         #   原始模板文件
         $readtpl = Action::readtpl( joinp(C('DIR_DIR'), C('DIR_APP'), C('DIR_TPL'),$tplpath) );
         #   编译文件路径
-        $comple_file = joinp(C('DIR_DIR'), C('DIR_APP'),$tplconf['COMPILE_DIR'],str_replace('/','_',$tplpath) .'.php');
+        $comple_file = joinp(C('DIR_DIR'), C('DIR_APP'),C('DIR_COM'),str_replace('/','_',$tplpath) .'.php');
         
         switch( C('SET_TPL_ENGINE') ){
 
