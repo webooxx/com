@@ -3,73 +3,61 @@ class indexAction extends Action{
 
     function __construct(){}
 
-	function index(){
-	
-		return $this->ps(  $_GET['ps'] ? $_GET['ps']  : '/' );
+	function test(){
+		dump($_GET);
+		dump($this);
+		dump( C('DIR_DIR') );
+		dump( file_get_contents( C('DIR_DIR').'/app.conf' ));
+		dump( file_get_contents( C('DIR_DIR').'/sys/act/indexAction.php' ));
 	}
 	
-	#	展现入口
-	function ps( $target ){
-	
-		#	目录路径
-		$docsRoot = joinp( _DIR_ ,C('DIR_DOC'));
-		$realPath = joinp( $docsRoot , $target);
-		$docIsDir = is_dir( $realPath );
+	function index(){		
+		
+		$intoPath = $_GET['p'] ? $_GET['p']  : '/';		#	传入的参数
+		
+		$realRoot = joinp( C('DIR_DIR') ,C('DIR_DOC'));	#	服务器文档根目录
+		$realPath = joinp( $realRoot , $intoPath);		#	服务器文档实际路径
 		
 		
-		#	立刻输出文件
-		if( !$docIsDir ){
+		#	如果文件不存在
+		if( !file_exists($realPath) ){ return $this->display( '404.html'); }
+		
+		
+		if( !is_dir( $realPath ) ){
 			$ext = array_pop( explode('.',$realPath) );
-			$content = file_get_contents($realPath);
+			$con = file_get_contents($realPath);
+			#	如果不是MarkDown文件
 			if( $ext != C('EXT_DOC') ){
-				$type = $this->ext2type('.'.$ext);
-				header("content-type:$type;charset=utf-8");
-				die( $content );
+				header("content-type:".$this->ext2type('.'.$ext).";charset=utf-8");
+				die( $con );
 			}
-		}
-		
-		#	返回的路径中需要剪切的部分
-		$cutLen = strlen( $docsRoot );
-		
-
-		
-		#	展现模板需要取得的变量
-		
-		$path = strlen( trim( $target ,'/') ) > 0 ?  explode( '/', trim( $target ,'/') ) : array();
-
-		$file =  $this->files( $realPath ,$cutLen);
-		
-		$tree = $this->tree( joinp( _DIR_ , C('DIR_DOC') ), $cutLen ,'/^[^_].*/' );
-		
-		
-		$this->assign( 'docs' , $file['docs'] );
-		
-		if( $docIsDir ){
-	
-			$this->assign( 'dirSeparator' ,'/' );
-			
-			$this->assign( 'dirs' , $file['dirs'] );
-			
-			$this->assign( 'imgs' , $file['imgs'] );
-			$this->assign( 'other' , $file['other'] );
-			$this->assign( 'mode' , 'dir' );
-		}else{
-			
-			#	文件模板变量
 			I('Markdown');
-			$this->assign( 'content' , Markdown( $content ) );	
-			$this->assign( 'mode' , 'art' );
+			
+			$tplName    = 'doc.html';
+			$currentDir = dirname( $intoPath );
+			$this->assign( 'con' , Markdown( $con ) );
+			
+		}else{
+			$tplName    = 'dir.html';
+			$currentDir = $intoPath;
 		}
-		$this->assign( 'path' , $path );
-		$this->assign( 'tree' , $tree );
-		$this->assign( 'treeJson' , json_encode( $tree ) );
+
+		$tree = $this->tree($realRoot ,  strlen( $realRoot ) ,'/^[^_\.].*/');
+		$file = $this->file($realPath , strlen( $realRoot ) ,'/^[^_\.].*/');
 		
-		$this->display( 'dir.html');
-	}
+		$this->assign( 'tree' ,$tree );
+		$this->assign( 'file' ,$file );
+		$this->assign( 'path' , $intoPath == '/' ? array() : (array)explode('/',  substr( $realPath,strlen($realRoot)+1  )) );
+		$this->assign( 'cdir' , $currentDir);
+
+		$this->assign( 'title' , "简单的Markdocs Online Path:".substr($realPath,strlen($realRoot) ) );
+		$this->assign( 'description' ,"简单的在线Markdown文档,网络,程序,设计,生活" );
 	
+		$this->display($tplName);
+	}
 	
 	#	取得当前目录下的文件列表
-	function files( $realPath , $cutLen ){
+	function file( $realPath , $cutLen ,$match ){
 	
 		$dirs = array();
 		$docs = array();
@@ -77,17 +65,19 @@ class indexAction extends Action{
 		$other= array();
 		
 		if( is_dir( $realPath ) ){
-			$scan = $this->scan( $realPath , '/^[^_].*/' );
+			$scan = $this->scan( $realPath , $match );
 		}else{
-			$scan = $this->scan( dirname( $realPath), '/^[^_].*/' );
+			$scan = $this->scan( dirname( $realPath), $match );
 		
 		}
 		foreach( $scan as $item ){
 			$file['path'] = substr( $item , $cutLen ) ;
 			$file['name'] = array_pop( explode('/', $file['path'] )  );
+			$file['mtime'] = date ("Ymd-H:i:s",  filemtime($item ));
+			$file['stat']  = stat($item );
 			
 			if( is_dir( $item ) ){
-				$_scan = $this->scan( $item , '/^[^_].*\.'.C('EXT_DOC').'$/' );
+				$_scan = $this->scan( $item , '/^[^_\.].*$/' );
 				$file['items'] = (int)count( $_scan );
 				$dirs[] = $file; 
 			}else{
@@ -96,7 +86,6 @@ class indexAction extends Action{
 					$docs[] = $file;
 				}else if( preg_match( '/\.(jpg|jpeg|gif|png|bpm)/i' ,$file['name'] ) ){
 					$imgs[] = $file;
-				
 				}else{
 					$other[] = $file;
 				}
@@ -128,6 +117,8 @@ class indexAction extends Action{
 		return $result;
 	}
 	
+	
+	
 	function gid( $type='default' ){
 		return $this->gid[ $type] = (int)$this->gid[ $type]+1;
 	}
@@ -148,12 +139,12 @@ class indexAction extends Action{
         return $result;
     }
 	
-	
 	#	错误信息
 	function err404(){
 		die('没有找到文件!');
 	}
 	
+	#	给出对应的 ContentType
 	function ext2type( $ext ){	
 		$b = array( ".*"=>"application/octet-stream",
 			".001"=>"application/x-001",

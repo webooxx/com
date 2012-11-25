@@ -1,0 +1,4 @@
+本目录可以直接作为根目录
+
+app.conf 是BAE 的URLREWRITE文件
+conf.php 是项目的配置文件

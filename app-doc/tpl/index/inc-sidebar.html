@@ -1,0 +1,24 @@
+<div id="sidebar">
+
+	<h3>Tree</h3>
+	<ul class="folder clearfix">
+		<li class="folder0" > <a href="/" title="回到主目录 /">/</a></li>
+		<!--{ foreach( $tree as $item ){ }-->
+		
+			<!--{ ;$cStyle = ''; }-->
+			<!--{ if( $item['path'] == $cdir){  $cStyle = 'class="cdir"'; } }-->
+		
+			<li><a  <!--{ $cStyle }--> title="进到目录 <!--{ $item['path'] }-->" href="<!--{ $item['path'] }-->"> <span class=" folder<!--{ $item['level'] }-->"></span><!--{ $item['name'] }--></a></li>
+		<!--{ } }-->
+	</ul>
+
+	<h3>Docs</h3>
+	<ul>
+		<!--{ if( count($file['docs'])>0 ) { }-->
+			<!--{ foreach( $file['docs'] as $item ){ }-->
+				<li class="docs"><a title="打开文档 <!--{ $item['path'] }-->" href="<!--{ $item['path'] }-->"><span class="book">=</span> <!--{ $item['name'] }--></a></li>
+			<!--{ } }-->
+		<!--{ } }-->
+	</ul>
+	
+</div>
