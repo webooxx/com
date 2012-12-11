@@ -1,0 +1,26 @@
+
+<div id="sidebar">
+    <h3>Tree</h3>
+    <div class="dir clearfix">
+
+        <a class="lev_0" href="/" title="Cd /">/</a>
+<!--{ foreach( $tree as $item ){ }-->
+<!--{ ;$cStyle = ( $item['path'] == $cdir) ? ' act' : '' ; }-->
+        <a class="lev_<!--{ $item['level'] }--><!--{ $cStyle }-->" title="Cd <!--{ $item['path'] }-->" href="<!--{ $item['path'] }-->"><!--{ $item['name'] }--></a>
+<!--{ } }-->
+
+    </div>
+
+    <h3>Docs</h3>
+    <div class="doc clearfix">
+
+<!--{ if( count($file['docs'])>0 ) { }-->
+<!--{ foreach( $file['docs'] as $item ){ }-->
+        <a title="Open <!--{ $item['name'] }-->" href="<!--{ $item['path'] }-->"><!--{ $item['name'] }--></a>
+<!--{ } }-->
+<!--{ } }-->
+
+    </div>
+
+</div>
+<!--SideBar End-->

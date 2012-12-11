@@ -17,25 +17,37 @@ class indexAction extends Action{
 		
 		$realRoot = joinp( C('DIR_DIR') ,C('DIR_DOC'));	#	服务器文档根目录
 		$realPath = joinp( $realRoot , $intoPath);		#	服务器文档实际路径
-		
-		
+
 		#	如果文件不存在
 		if( !file_exists($realPath) ){ return $this->display( '404.html'); }
 		
+		$pathInfo = pathinfo($realPath);
 		
 		if( !is_dir( $realPath ) ){
-			$ext = array_pop( explode('.',$realPath) );
+			$ext = $pathInfo['extension'];
 			$con = file_get_contents($realPath);
 			#	如果不是MarkDown文件
 			if( $ext != C('EXT_DOC') ){
 				header("content-type:".$this->ext2type('.'.$ext).";charset=utf-8");
 				die( $con );
 			}
+
+			
+			#	处理Tags
+			$con = preg_replace( '/(?:^|\n)@(\w+)\s([^\n]+)/',"<span class=\"tags $1\">$1:$2</span>",$con);
+			
+			#	如果文档不是以H1开头的则自动插入文件名
+			
+			if( !preg_match( '/^\#{1}/',$con) ){
+				$con  = '#'.$pathInfo['filename']."\n".$con;
+			}
+			
 			I('Markdown');
+			$content = Markdown( $con );
 			
 			$tplName    = 'doc.html';
 			$currentDir = dirname( $intoPath );
-			$this->assign( 'con' , Markdown( $con ) );
+			$this->assign( 'content' , $content );
 			
 		}else{
 			$tplName    = 'dir.html';
@@ -45,19 +57,22 @@ class indexAction extends Action{
 		$tree = $this->tree($realRoot ,  strlen( $realRoot ) ,'/^[^_\.].*/');
 		$file = $this->file($realPath , strlen( $realRoot ) ,'/^[^_\.].*/');
 		
+		#	模板参数
+		
 		$this->assign( 'tree' ,$tree );
 		$this->assign( 'file' ,$file );
 		$this->assign( 'path' , $intoPath == '/' ? array() : (array)explode('/',  substr( $realPath,strlen($realRoot)+1  )) );
 		$this->assign( 'cdir' , $currentDir);
 
-		$this->assign( 'title' , "简单的Markdocs Online Path:".substr($realPath,strlen($realRoot) ) );
-		$this->assign( 'description' ,"简单的在线Markdown文档,网络,程序,设计,生活" );
+		$this->assign( 'title' , "webooxx 在线文档 - ".substr($realPath,strlen($realRoot) ) );
+		$this->assign( 'description' ,"webooxx 在线文档,在线Markdown文档" );
+		$this->assign( 'author' ,"webooxx@gmail.com" );
 	
 		$this->display($tplName);
 	}
 	
 	#	取得当前目录下的文件列表
-	function file( $realPath , $cutLen ,$match ){
+	function file( $realPath , $cutLen = 0 ,$match = Null ){
 	
 		$dirs = array();
 		$docs = array();
@@ -73,20 +88,33 @@ class indexAction extends Action{
 		foreach( $scan as $item ){
 			$file['path'] = substr( $item , $cutLen ) ;
 			$file['name'] = array_pop( explode('/', $file['path'] )  );
-			$file['mtime'] = date ("Ymd-H:i:s",  filemtime($item ));
-			$file['stat']  = stat($item );
+			$file['info'] = array();
 			
+			#	获得目录下成员数
 			if( is_dir( $item ) ){
-				$_scan = $this->scan( $item , '/^[^_\.].*$/' );
-				$file['items'] = (int)count( $_scan );
+				$_scan = $this->scan( $item , $match );
+				$file['info'][] = (int)count( $_scan ).' items';
 				$dirs[] = $file; 
 			}else{
+				#	将文件分类
+				
+				
+				
 				if( preg_match( '/\.'.C('EXT_DOC').'$/' ,$file['name'] ) ){
 					$file['name'] = array_shift( explode('.', $file['name'] )  );
+					
+					$file['info'][] = 'time: '.$this->ftime( filemtime($item) );
+					$file['info'][] = 'tags: '.$this->gettags($item);
+					
 					$docs[] = $file;
 				}else if( preg_match( '/\.(jpg|jpeg|gif|png|bpm)/i' ,$file['name'] ) ){
+				
+					$file['info'][] = $file['name'];
+					$file['info'][] = 'size: '.$this->fbytes(filesize($item));
+					
 					$imgs[] = $file;
 				}else{
+					$file['info'][] = 'size: '.$this->fbytes(filesize($item));
 					$other[] = $file;
 				}
 			}
@@ -94,7 +122,7 @@ class indexAction extends Action{
 		return array('dirs'=>$dirs ,'docs'=>$docs ,'imgs'=>$imgs ,'other'=>$other ,);
 	}
 	
-	#	取得文档整体目录树	
+	#	取得目录树	
 	function tree( $path ,  $cutLen = 0 , $regexp = '/.*/' ,  $flat = 0 , $result = array() ,  $level = 0 ){
 		$level = $level+1;
 		$dirs  = scandir( $path );
@@ -118,14 +146,15 @@ class indexAction extends Action{
 	}
 	
 	
-	
+	#	唯一ID
 	function gid( $type='default' ){
 		return $this->gid[ $type] = (int)$this->gid[ $type]+1;
 	}
 	
     #	普通搜索
     function scan($path , $match = Null){ return $this->scand( $path , $match  , array() , false);}
-    #	遍历搜索
+    
+	#	遍历搜索
     function scand( $path , $match = Null , $result = array() ,$rec = true) {
         $dirs = (array)scandir( $path );
         foreach($dirs as $d) {
@@ -144,8 +173,37 @@ class indexAction extends Action{
 		die('没有找到文件!');
 	}
 	
+	#	取得文档的tag
+	function gettags($path = null){
+		return '-';
+	}
+	
+	#	美化时间
+	function ftime($time){
+		$now = time();
+		$sub = $now - $time;
+		
+		if($sub<60){return 'Just now';}
+		
+		$sub = floor($sub/60);					#	分钟
+		if($sub<60){return $sub.' min ago';}
+		
+		$sub = floor($sub/60);					#	小时
+		if($sub<24){return $sub.' hour ago';}
+		
+		$sub = floor($sub/24);					#	天
+		if($sub<30){return $sub.' day ago';}
+		
+		$sub = floor($sub/30);					#	月
+		if($sub<12){return $sub.' month ago';}
+		
+		$sub = floor($sub/12);					#	年
+		return $sub.' year ago';
+		
+	}
+	
 	#	给出对应的 ContentType
-	function ext2type( $ext ){	
+	function ext2type( $ext ){
 		$b = array( ".*"=>"application/octet-stream",
 			".001"=>"application/x-001",
 			".301"=>"application/x-301",
@@ -485,5 +543,28 @@ class indexAction extends Action{
 			".x_b"=>"application/x-x_b",
 			".x_t"=>"application/x-x_t" );
 		return $b[$ext];
+	}
+
+	
+	function fbytes($a_bytes) {
+		if ($a_bytes < 1024) {
+			return $a_bytes .' B';
+		} elseif ($a_bytes < 1048576) {
+			return round($a_bytes / 1024, 2) .'KB';
+		} elseif ($a_bytes < 1073741824) {
+			return round($a_bytes / 1048576, 2) . 'MB';
+		} elseif ($a_bytes < 1099511627776) {
+			return round($a_bytes / 1073741824, 2) . 'GB';
+		} elseif ($a_bytes < 1125899906842624) {
+			return round($a_bytes / 1099511627776, 2) .'TB';
+		} elseif ($a_bytes < 1152921504606846976) {
+			return round($a_bytes / 1125899906842624, 2) .'PB';
+		} elseif ($a_bytes < 1180591620717411303424) {
+			return round($a_bytes / 1152921504606846976, 2) .'EB';
+		} elseif ($a_bytes < 1208925819614629174706176) {
+			return round($a_bytes / 1180591620717411303424, 2) .'ZB';
+		} else {
+			return round($a_bytes / 1208925819614629174706176, 2) .'YB';
+		}
 	}
 }

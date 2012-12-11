@@ -7,11 +7,13 @@ ul,li{list-style:none}
 
 /*reset end*/
 
+.doc ol{margin-bottom: 16px;margin-left: 32px;}
+.doc ol li{list-style-type: decimal;}
 .doc ul,
 .doc menu,
 .doc dir { list-style-type: disc; }
 .doc ul{margin-bottom: 16px;margin-left: 32px;}
-.doc li{list-style-type: disc;line-height: 24px;}
+.doc li{line-height: 24px;}
 .doc p{margin:0.5em 0; word-wrap:break-word}
 
 .doc h2,
