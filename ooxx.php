@@ -174,8 +174,9 @@ class Action {
     #   取得原始的Tpl内容
     private static function readtpl($tplpath){
         #   模板源码，关键字处理  1> ../Public/ 2> ../../
-        $url_index  = '//'.joinp( $_SERVER['HTTP_HOST'], dirname( $_SERVER['SCRIPT_NAME'] )  ) ;
-        $url_public = $url_index.joinp( C('DIR_APP'),C('DIR_TPL'),C('SET_TPL_THEME'),'Public' ) .'/';       
+        $url_index  = rtrim( '//'.joinp( $_SERVER['HTTP_HOST'], dirname( $_SERVER['SCRIPT_NAME'] )  ) ,'\\/' ).'/' ;
+        $url_public = $url_index.joinp( C('DIR_APP'),C('DIR_TPL'),C('SET_TPL_THEME'),'Public' ) .'/';
+
         return str_replace( array('../../','../Public/' ),  array($url_index,$url_public) ,file_get_contents($tplpath) );
     }
 }
