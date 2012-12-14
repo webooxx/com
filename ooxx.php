@@ -224,8 +224,8 @@ class MysqlModel extends Model{
     private function newlink( $sqlnewlink = false ){
         $this->connect_id = @mysql_connect($this->sqlserver, $this->sqlusername, $this->sqlpassword , $sqlnewlinks ? $sqlnewlinks : time() );
         if($this->connect_id){
-            @mysql_query('set names "'.C('SET_DB_DEFCHART').'"') or $this->error( '设置字符集错误！ ');
             @mysql_select_db($this->sqlselectdb) or $this->error( '数据库连接错误！ ');
+            @mysql_query('set names "'.C('SET_DB_DEFCHART').'"') or $this->error( '设置字符集错误！ ');
         }else{
             $this->error( '服务器连接错误！ ' );
             return $this; 
