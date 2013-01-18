@@ -2,5 +2,4 @@ name: webooxx
 version: 9
 handle:
 
-- rewrite: if( path ~ "^/((?!index\.php)[^/]*)$" ) goto "/index.php?m=index&a=$1"
-- rewrite: if( path ~ "^/((?!index\.php)[^/]*)/([^/]*)$" ) goto "/index.php?m=$1&a=$2"
+- rewrite: if( path ~ "^(/(?!index\.php|app\-txtdoc).*)$" ) goto "/index.php?type=rewrite&p=$1"

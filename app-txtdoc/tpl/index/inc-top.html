@@ -1,0 +1,14 @@
+</head>
+<body>
+<div id="top">
+
+	<div id="nav">
+    Path：<a href="<!--{ ;echo C('TPL_URL_INDEX'); }-->" title="cd /">Root</a> 
+    <!--{ ;$link='';foreach( $path as $item ){ }-->
+        <!--{;$link=$link .'/'. $item;}--><!--{ ;$cStyle = ( $link == $cdir) ? 'class="act"' : '' ; }-->
+       » <a <!--{ $cStyle }--> href="<!--{;echo C('DEV_MOD') ? '?p=' : '';}--><!--{ $link }-->"><!--{ $item }--></a>
+    <!--{ } }-->
+	</div>
+	<a id="logo" href="//webooxx.com" title="webooxx's markwiki online">Webooxx.com</a>
+</div>
+<!--Top End-->

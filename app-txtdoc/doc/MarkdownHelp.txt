@@ -1,0 +1,103 @@
+@LABELS help
+@AUTHOR 徐振华
+
+如果没有以#大标题开头则会自动插入文件名为大标题
+
+每行的开始若是以@开头，则会特殊处理，该行将被当作隐藏数据，`例如 @LABELS js,fe ` 用于数据收集
+
+## 标题格式
+# H1标题，最好只出现一次,这是第二次了
+## H2标题
+### H3标题
+#### H4标题
+##### H5标题
+###### H6标题
+
+##文字格式
+
+*普通强调*
+**特别强调**
+`选中<hello world>标示`
+
+
+段落文字需要两个空格才是真正的换行
+
+> 总之， Markdown 的语法全由一些符号所组成，这些符号经过精挑细选，其作用一目了然。比如：在文字两旁加上星号，看起来就像*强调*。Markdown 的列表看起来，嗯，就是列表。Markdown 的区块引用看起来就真的像是引用一段文字，就像你曾在电子邮件中见过的那样。
+
+- - -
+
+> Markdown 的目标是实现「易读易写」。
+
+> 可读性，无论如何，都是最重要的。一份使用 Markdown 格式撰写的文件应该可以直接以纯文本发布，并且看起来不会像是由许多标签或是格式指令所构成。Markdown 语法受到一些既有 text-to-HTML 格式的影响，包括 Setext、atx、Textile、reStructuredText、Grutatext 和 EtText，而最大灵感来源其实是纯文本电子邮件的格式。
+
+
+##列表
+
+### 无序列表
+
+ * 项目1
+ * 项目2
+ * 项目3
+    * 项目1
+    * 项目2
+
+
+### 有序列表
+
+ 1. 项目1
+ 2. 项目2
+ 3. 项目3
+    * 项目1
+    * 项目2
+		* 项目1
+		* 项目2
+
+### 表格
+
+`@todo 还没有对表格的自动处理，需要增加。`
+
+### 多行内容
+ 1. This is a list item with two paragraphs. Lorem ipsum dolor
+    sit amet, consectetuer adipiscing elit. Aliquam hendrerit
+    mi posuere lectus.
+
+    Vestibulum enim wisi, viverra nec, fringilla in, laoreet
+    vitae, risus. Donec sit amet nisl. Aliquam semper ipsum
+    sit amet velit.
+
+ 2. Suspendisse id sem consectetuer libero luctus adipiscing.
+		
+## 图片和链接
+
+
+ ![图片名称](http://www.baidu.com/img/baidu_sylogo1.gif)
+ 
+ [链接名称](http://baidu.com)
+
+ 
+	:::
+	![图片名称](http://www.baidu.com/img/baidu_sylogo1.gif)
+	[链接名称](http://baidu.com)
+
+###代码
+
+
+	:::javascript
+	:::javascript
+	var a = function(){
+		var a =1+2;
+		var b = 'str';
+		return a+b;
+	};
+	a();
+
+## 其他
+### 水平线
+
+水平线
+***
+其实就是三个*
+
+### 特殊字符
+
+\*literal asterisks\*

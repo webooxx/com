@@ -1,0 +1,57 @@
+<!--{ include inc-header.html }-->
+<link rel="stylesheet" href="../Public/css/markdown-width.css" type="text/css" />
+<script type="text/javascript" src="../Public/js/tangram-min.js"></script>
+<!--{ include inc-top.html }-->
+<!--{ include inc-sidebar.html }-->
+
+<div id="content">
+
+<div id="doc">
+
+<!--{ $content }-->
+
+
+<div id="comment">
+	<button onclick="toggleComment()">显示/隐藏 评论</button>
+	<br />
+	<br />
+	<div id="uyan_frame" style="display:none"></div>
+	<script type="text/javascript" id="UYScript" src="http://v1.uyan.cc/js/iframe.js?UYUserId=1712275" async=""></script>
+</div>
+
+
+</div>
+
+<script type="text/javascript">
+    var wrapper = T('<div id="structure">').appendTo( T('body') ).append('<div id="title">文档结构索引').append(T('<div>').hide()).children().last(),
+    allElems = T('#doc').children(),result = [];
+
+    for (var i = 0, j = allElems.length; i < j; i++) {
+        var tagName = allElems[i].tagName.toLowerCase();
+        var match   = tagName.match(/h([2-9])/);
+        if ( match != null ) {
+            level = match[1];
+            allElems[i].id =  '_an_'+result.length;
+            result.push( '<li style="padding-left:' + (level - 2) + 'em"><a href="#_an_' + result.length + '">' + allElems[i].innerHTML + '</a></li>' );
+        }
+    }
+    result.push( '<li class="top"> <a href="#">返回顶部</a> <a href="#">收起</a></li>' );
+
+    T.insertHTML(wrapper, 'beforeEnd', '<ul>' + result.join('') + '</ul>' );
+
+    T('#structure #title').click(function(){ T('#structure').children().last().toggle(); })
+    T('#structure .top a').last().click(function(){ T('#structure').children().last().toggle(); })
+</script>
+
+<script  type="text/javascript">
+	var ce = document.getElementById('uyan_frame');
+	function toggleComment(){
+		ce.style.display = ce.style.display == 'block' ? 'none' : 'block';
+	}
+</script>
+
+
+
+</div>
+<!--Dir Content End-->
+<!--{ include inc-footer.html }-->

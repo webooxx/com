@@ -1,0 +1,47 @@
+
+
+#doc ol{margin-bottom: 16px;margin-left: 32px;}
+#doc ol li{list-style-type: decimal;}
+#doc ul,
+#doc menu,
+#doc dir { list-style-type: disc; }
+#doc ul{margin-bottom: 16px;margin-left: 32px;}
+#doc ul li{list-style-type: disc;}
+#doc li{line-height: 24px;}
+#doc p{margin:0.5em 0; word-wrap:break-word}
+
+#doc h2,
+#doc h3,
+#doc h4,
+#doc h5,
+#doc h6 {line-height:2em;text-indent:0.5em}
+
+#doc h1{font-size:1.6em;line-height:1;margin-bottom:0.6em;}
+#doc h2{font-size:1.2em;margin-bottom:0.5em;background: #84a1c1; color: #fff; text-shadow: 0 1px 0 #444;}
+#doc h3{font-size:1.1em;line-height:1.2em;margin-bottom:0.5em;color:#2D3742;background:#CDDAE8;text-shadow: 0 1px 0 #FFF;padding:3px 0px;}
+#doc h4{font-size:1em;line-height:1.25;margin-bottom:0.5em; color:#13538D;color: #4E5F72; text-shadow: 1px 1px 0 #fff;}
+#doc h5{font-size:1em;margin-bottom:0.5em; color:#638D13;}
+#doc h6{font-size:1em;}
+
+#doc h2:target,
+#doc h3:target { color: #4D80B3; text-shadow:1px 1px 2px #ccc;}
+
+#doc a{color: #333;border-bottom: 1px dashed #666;}
+#doc a:hover{color: #A00;border-bottom: 1px dashed #A00;}
+
+#doc del{border:.08333em solid #c99;text-decoration:line-through;background:#fdcccc;}
+#doc ins{border:.08333em solid #9c9;background:#CFC;}
+#doc hr{border:0;height:2px;background:#EDEEED;border-top:1px solid #BCC0B9;}
+
+#doc pre { color: #070606; background-color: #f5f5f5; margin: 1em 0; padding: 0.5em; border: 1px dotted #b7c4d3; line-height: 150%; zoom: 1;}
+#doc pre,
+#doc code,
+#doc samp{font-family:Menlo, Consolas, Monaco, "Courier New", Courier, monospace;overflow:auto;word-wrap:break-word;background: none repeat scroll 0 0 #EEF0EB;}
+#doc table,
+#doc input{font-size:1em;}
+#doc table{border-collapse:separate;border-spacing:0;}
+#doc big{font-size:1.3em;}
+#doc small{font-size:.85em;}
+#doc strong{color:red;}
+#doc  em{font-weight:bold; font-style:normal}
+#doc blockquote{background:#EFEFEF;padding:10px;margin:10px 0}

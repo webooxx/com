@@ -1,0 +1,36 @@
+<!--{ include inc-header.html }-->
+<!--{ include inc-top.html }-->
+<!--{ include inc-sidebar.html }-->
+
+<div id="content">
+
+<div id="dir">
+
+<!--{ foreach( $file as $k => $v ){ }-->
+<!--{ if(count($v)>0){ }-->
+    <h3><!--{;echo strtoupper($k);}--> (<!--{;echo count($v);}-->)</h3>
+
+
+
+    <div class="category clearfix <!--{$k;}-->">
+<!--{ if($k=='imgs')	{ }-->
+<!--{ foreach( $v as $item ){ }-->
+		<a target="_blank" href="<!--{;echo C('DEV_MOD') ? '?p=' : '';}--><!--{ $item['path'] }-->"><img width="100%"  src="<!--{;echo C('DEV_MOD') ? '?p=' : '';}--><!--{ $item['path'] }-->"  /><span><!--{ ;echo implode('<br />',$item['info']); }--></span></a>
+<!--{ } }-->
+<!--{ }else{ }-->	
+<!--{ foreach( $v as $item ){ }-->
+        <a href="<!--{;echo C('DEV_MOD') ? '?p=' : '';}--><!--{ $item['path'] }-->"><!--{ $item['name'] }--><span><!--{ ;echo implode('<br />',$item['info']); }--></span></a>
+<!--{ } }-->
+<!--{ } }-->
+    </div>
+
+	
+	
+<!--{ } }-->
+<!--{ } }-->
+
+</div>
+
+</div>
+<!--Dir Content End-->
+<!--{ include inc-footer.html }-->
