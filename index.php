@@ -1,9 +1,8 @@
 <?php
-define('PATH_NOW',dirname($_SERVER['SCRIPT_FILENAME']));
+define('PATH_NOW',dirname ( __FILE__ ) );
 define('PATH_MVC',PATH_NOW.'/mvc');
 
-#   定义系统框架文件和配置文件
-define('FILE_MVC',PATH_MVC.'/ooxx.php');
-include( PATH_NOW.'/cfg-txtdoc.php' );
+#	不同项目目录下拥有自己的 config 文件，如果切换项目可直接将 config.php 文件覆盖至本目录
+include( PATH_NOW.'/config.php' );
 
-$app = include(FILE_MVC);$app->init( _configs() ,$argv );
+$app = require_once(PATH_MVC.'/ooxx.php');$app->init( _configs() ,$argv );
