@@ -7,7 +7,7 @@
         <a class="lev_0" href="<!--{ ;echo C('TPL_URL_INDEX'); }-->" title="cd /">Root</a>
 <!--{ foreach( $tree as $item ){ }-->
 <!--{ ;$cStyle = ( $item['path'] == $cdir) ? ' act' : '' ; }-->
-        <a class="lev_<!--{ $item['level'] }--><!--{ $cStyle }-->" title="Cd <!--{ $item['path'] }-->" href="<!--{ $item['path'] }-->"><!--{ $item['name'] }--></a>
+        <a class="lev_<!--{ $item['level'] }--><!--{ $cStyle }-->" title="Cd <!--{ $item['path'] }-->" href="<!--{;echo C('DEV_MOD') ? '?p=' : '';}--><!--{ $item['path'] }-->"><!--{ $item['name'] }--></a>
 <!--{ } }-->
 
     </div>
