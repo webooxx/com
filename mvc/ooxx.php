@@ -31,12 +31,12 @@ class ooxx {
         'DIR_INC'=> 'inc',              #   公共类目录名
 
         'DIR_TPL'=> 'tpl',              #   模板目录名
-        'DIR_COM'=> '_',                #   模板编译目录名
+		'DIR_COM'=> '.tc',              #   模板编译目录名
         'DIR_THEME'=> 'default',        #   模板主题目录名
 
         #   以下参数可选支持
                                         #   模板相关
-        'TPL_ENGINE'=> 'none',          #   模板引擎类型，目前支持 none 原样输出（不使用编译目录），default 内置的模板引擎，smarty 暂不支持
+        'TPL_ENGINE'=> 'none',          #   模板引擎类型，目前支持 none 原样输出（不使用编译目录，支持静态变量、include），default 内置的模板引擎，smarty 暂不支持
         'TPL_LEFT_DELIMITER' => '<!--{',#   模板变量左分界符
         'TPL_RIGHT_DELIMITER'=> '}-->' ,#   模板变量右分界符
         'TPL_URL_INDEX'  => '.',        #   模板关键字，访问index.php的URL 初始化时重设
@@ -45,19 +45,16 @@ class ooxx {
                                         #   数据库相关
         'DB_ENGINE'=> 'Mysql',          #   数据库擎类型，目前支持 mysql ， csv 类型
         'DB_PREFIX'=> '',               #   数据库表前缀，如果是CSV类型数据库此项相当于数据文件存放目录(相对于项目主目录)
-        'DB_HOST' => '127.0.0.1',
-        'DB_PORT' => '3306',
+        'DB_HOST' => '127.0.0.1:3306',
         'DB_NAME' => 'test',
         'DB_USERNAME' => 'root',
         'DB_PASSWORD' => '',
         'DB_DEFCHART' => 'UTF8',
 
         #   系统其他设置
-        'SYS_VALIDATE_FN' => '',        #   系统，验证函数设置，格式为字符串，例如rbac:check，执行时传入一个参数数组 array( 'mod'=> 模块名 , 'act'=> , 方法名  )
+        'SYS_VERIFY_FUNC' => '',        #   系统，验证函数设置，格式为字符串，例如rbac:check，执行时传入一个参数数组 array( 'mod'=> 模块名 , 'act'=> , 方法名  )
         'SYS_CURRENT_MOD' => '',        #   系统，当前的模块名
         'SYS_CURRENT_ACT' => '',        #   系统，当前的方法名
-        'SYS_SINAAPP_COM' => '',        #   系统，新浪的 sinaapp 特别支持，编译模板时将输出到memCache
-
     );
     #   全局共享参数，通过快捷函数 C 进行管理
     private static $setCfgs = array();
@@ -80,14 +77,11 @@ class ooxx {
         ooxx::$argCfgs['PATH_MVC'] = defined(PATH_MVC) ? PATH_MVC : ooxx::joinp( ooxx::$argCfgs['PATH_NOW'] ,'mvc' );
         ooxx::$argCfgs['PATH_COM'] = ooxx::joinp( ooxx::$argCfgs['PATH_APP'] , ooxx::$argCfgs['DIR_COM'] );
 
-        ooxx::$argCfgs['TPL_URL_INDEX']  = rtrim( 'http://'.J( $_SERVER['HTTP_HOST'], dirname( $_SERVER['SCRIPT_NAME'] )  ) ,'\\/' ).'/' ;
-        ooxx::$argCfgs['TPL_URL_PUBLIC'] =  C('TPL_URL_INDEX').J(  ooxx::$argCfgs['DIR_APP'], ooxx::$argCfgs['DIR_TPL'], ooxx::$argCfgs['DIR_THEME'],'Public' ) .'/';
-
         #   初始化模板编译目录
-        if( ooxx::$argCfgs['TPL_ENGINE'] != 'none' && !ooxx::$argCfgs['SYS_SINAAPP_COM']  ){
-            if( !realpath( ooxx::$argCfgs['PATH_COM'] ) ){
-                mkdir( ooxx::$argCfgs['PATH_COM'] , 0700);
-            }
+        if( ooxx::$argCfgs['TPL_ENGINE'] != 'none' ){
+                if( !@mkdir( ooxx::$argCfgs['PATH_COM'] , 0700)  ){
+                    ooxx::$argCfgs['PATH_COM'] = sys_get_temp_dir();
+                }
         }
 
         $m_key = ooxx::cfg('DEF_REQ_KEY_MOD');
@@ -102,9 +96,12 @@ class ooxx {
 
     #   模块管理
     public static function mod($m){
+
         ooxx::$argCfgs['SYS_CURRENT_MOD'] = $m;                 #   记录当前的模块名，浏览器入口、A() 均可执行到此处
         if( ooxx::$modules[$m] ){ return ooxx::$modules[$m];}
+
         else{
+
             $n = $m.ooxx::cfg('DEC_ACT_EXT');
             $actFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_APP'), ooxx::cfg('DIR_ACT'), $n.'.php' ) );
 
@@ -113,6 +110,7 @@ class ooxx {
                 $actFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_MVC') ,ooxx::cfg('DIR_ACT'), $n.'.php' ) );
                 if(!$actFile){ die( 'Action '.$m. ' is non-existent!' );}
             }
+
             include_once( $actFile );
             ooxx::$modules[$m] = new $n;
             ooxx::$modules[$m]->mod_name=$m;
@@ -135,13 +133,31 @@ class ooxx {
     public static function set($n,$v){
         return ooxx::$argCfgs[$n] = $v ;
     }
+    #   直接在内存中存取数据
+    public static function shmop($n,$v = NULL,$delete = false){
+        $shmid = shmop_open($n, "w", 0, 102400);
+        if( is_null($v) ){
+            $back = shmop_write($shmid, $v, 0);
+        }else{
+            $size = shmop_size($shmid);
+            $back = shmop_read($shmid, 0, $size);
+        }
+        if( $delete ){
+            shmop_delete($shmid);
+            shmop_close($shmid);
+        }
+        return $back;
+    }
 }
 
-#   控制器模块类
+#   控制器管理器
 class Action {
 
     #   魔术方法，以处理 A 找不到模块的情况，以及浏览器入口处理
     function __call( $method , $args ){
+
+        S('TPL_URL_INDEX' , rtrim( 'http://'.J( $_SERVER['HTTP_HOST'], dirname( $_SERVER['SCRIPT_NAME'] )  ) ,'\\/' ).'/' );
+        S('TPL_URL_PUBLIC',C('TPL_URL_INDEX').J(  C('DIR_APP'), C('DIR_TPL'), C('DIR_THEME'),'Public' ) .'/') ;
 
         $fun_name = $this->fun_name = $args[0];
 
@@ -149,12 +165,13 @@ class Action {
         if( $method == '_ActCall_' ){
 
             #   验证处理浏览器的访问
-            if(  C('SYS_VALIDATE_FN')  ){
-                $val = explode( ':', C('SYS_VALIDATE_FN') );
-                $valmod = ooxx::mod($v[0]);
-
+            if(  C('SYS_VERIFY_FUNC')  ){
+                $val = explode( ':', C('SYS_VERIFY_FUNC') );
+                $mod = ooxx::mod($val[0]);
                 #   调用验证方法，错误信息应当在验证方法中输出。
-                if( !$valmod->$val[1]( array('mod'=>$args[1],'fun'=>$args[0])) )  { return false; }
+                if( !$mod->$val[1]( array('module'=>$args[1],'action'=>$args[0])) )  {
+                    return false; 
+                }
             }
             #   验证通过，将执行的方法名从魔术调用修改为需要执行的方法名
             $method = $fun_name;
@@ -189,7 +206,7 @@ class Action {
         #   模板变量数据
         $tpldata = (array)$this->tpl_vars;
         #   模板编译文件路径
-        $name_comple =  substr( $tplpath,strlen(C('PATH_COM'))-1 );
+        $name_comple =  substr( $tplpath,strlen(C('PATH_COM'))+1 );
         $path_comple = J( C('PATH_COM'),'com_'.str_replace( array('/','\\',':'),'_', $name_comple ) .'.php');
 
         #   合并所有的include后（排除在include时候多次计算）
@@ -200,15 +217,11 @@ class Action {
                     $tplread = preg_replace('/('.C('TPL_LEFT_DELIMITER').')\s*\$(.*?);?\s*('.C('TPL_RIGHT_DELIMITER').')/','<?php echo \$$2; ?>',$tplread);
                     $tplread = preg_replace('/('.C('TPL_LEFT_DELIMITER').')\s*(.*?);?\s*('.C('TPL_RIGHT_DELIMITER').'){1}/','<?php $2; ?>',$tplread);
 
-                    if(C('SYS_SINAAPP_COM')){
-                        $mmc=memcache_init();
-                        memcache_set($mmc,$name_comple, $tplread);
-                        $path_comple =  C('TPL_URL_INDEX').'index.php?a=_fetch_tpl_sina_mem&key='.$name_comple;
-                    }else{
-                        @file_put_contents( $path_comple , $tplread );
-                    }
+                    @file_put_contents( $path_comple , $tplread );
+
                     extract($tpldata);
                     $tplread = include( $path_comple);
+                    unlink($path_comple);
                 break;
                 case 'smarty' :
                     #   处理Smarty类型的模板需要使用 mvc/inc 中的 smarty 类
@@ -218,14 +231,6 @@ class Action {
         return  $tplread;
     }
     function _fetch_inc_callback( $arg ){ return $this->fetch( trim($arg[1]),true ); }
-
-    #   sinaapp状态下支持通过浏览器取得memcahce的值
-    function _fetch_tpl_sina_mem(){
-        $key=$_GET['key'];
-        $mmc=memcache_init();
-        echo  memcache_get($mmc,$key);
-        memcache_delete($mmc,$key);
-    }
 
     #   计算Tpl的相对路径，支持不同的模板名、模块名、主题名，格式->  [主题名:][模块名:][方法名:].html ，参数传入为反方向传入；
     function _tplpath( $method = Null, $module = Null, $theme = Null){
@@ -239,7 +244,7 @@ class Action {
     }
 }
 
-#   通用数据模型抽象类
+#   数据模型管理器
 class Model{
     private static $instaces;
     public  static function getInstace( $table = Null , $engine = Null ){
@@ -262,7 +267,7 @@ class MysqlModel extends Model{
     private $sqlselectdb;
 
     function __construct(){
-        $this->sqlserver   = C('DB_HOST').':'. C('DB_PORT');
+        $this->sqlserver   = C('DB_HOST');
         $this->sqlusername = C('DB_USERNAME');
         $this->sqlpassword = C('DB_PASSWORD');
         $this->sqlselectdb = C('DB_NAME');
@@ -288,7 +293,7 @@ class MysqlModel extends Model{
     #   自动构建SQL
     function __call( $do,$args = array() ){
 
-		#	自动参数分配支持：field、limit、group、order、having、debug
+        #   自动参数分配支持：field、limit、group、order、having、debug
         $first = $args[0];
         switch ( $do ) {
 
@@ -432,7 +437,7 @@ class CsvModel extends Model{
         }
         $this->focusLimit = -1;
     }
-	
+
     #   设置表名，创建空数据文件，$table 参数必有
     function table( $table ){
 
@@ -633,6 +638,7 @@ function ddump($arg) { @header("Content-type:text/html"); echo '<pre>'; var_dump
 function json ($arg) { @header("Content-type:text/json"); echo json_encode($arg) ; }
 function djson($arg) { @header("Content-type:text/json"); die( json_encode($arg)); }
 function log4j($msg) { echo "[".date('Y-m-d H:i:s')."]".( C('MODE_CMD') ?  $msg."\n" : '<p>'.$msg.'</p>' );}
+function o2a($obj){ $result = array(); if(!is_array($obj)){ if($var = get_object_vars($obj)){ foreach($var as $key => $value){ $result[$key] = o2a($value); } } else{ return $obj; } } else{ foreach($obj as $key => $value){ $result[$key] = o2a($value); } } return $result; }
 
 #   快捷方式
 function A( $n = NULL ){ return is_null($n) ? ooxx::mod( C('DEF_MOD') ) : ooxx::mod( $n ); }
@@ -647,5 +653,4 @@ function I( $n=Null ){
 function J(){ $args = func_get_args(); return  call_user_func_array(array('ooxx', 'joinp'), $args );}
 function M( $table = Null, $type = Null ){ return Model::getInstace( $table , $type); }
 function S( $n = NULL,$v = NULL ){ return ooxx::set($n,$v);}
-
 return new ooxx;
