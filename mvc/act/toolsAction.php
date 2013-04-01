@@ -2,7 +2,7 @@
 class toolsAction extends Action{
 	
 	#   拒绝客户端访问模式
-	function __construct(){C('SYS_VALIDATE_FN','rbac:reject');}
+	function __construct(){C('SYS_VERIFY_FUNC','rbac:reject');}
 
     #	普通搜索,支持正则匹配路径
     function scan($path , $match = null){
@@ -101,8 +101,7 @@ class toolsAction extends Action{
 				case 'html' :
 					$value = htmlspecialchars($value);
 				break;
-
-				
+							
 				case 'strrev' :
 					$value = $this->str_rev_gb($value);
 				break;
@@ -136,6 +135,38 @@ class toolsAction extends Action{
 		krsort($array);
 		return implode($array);
 	}
+	
+	#    字符串中文截取
+	function str_sub_gb($sourcestr,$cutlength){
+       $returnstr=''; 
+       $i=0; 
+       $n=0; 
+       $str_length=strlen($sourcestr); 
+        while (($n<$cutlength) and ($i<=$str_length)){ 
+            $temp_str=substr($sourcestr,$i,1); 
+            $ascnum=Ord($temp_str); 
+            if ($ascnum>=224){ 
+                $returnstr=$returnstr.substr($sourcestr,$i,3);         
+                $i=$i+3;
+                $n++;
+            }elseif ($ascnum>=192){ 
+                $returnstr=$returnstr.substr($sourcestr,$i,2);
+                $i=$i+2;
+                $n++;
+            }elseif ($ascnum>=65 && $ascnum<=90){ 
+                $returnstr=$returnstr.substr($sourcestr,$i,1); 
+                $i=$i+1;
+                $n++;
+            }else{
+            $returnstr=$returnstr.substr($sourcestr,$i,1); 
+                $i=$i+1;
+                $n=$n+0.5;
+            } 
+        }
+        if ($str_length>$cutlength){ $returnstr = $returnstr . "..."; }
+        return $returnstr;
+    }
+	
 	
 	#	中转ajax的跨域请求
 	function proxy(){
