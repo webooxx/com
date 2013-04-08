@@ -342,9 +342,10 @@ class MysqlModel extends Model{
             #   设置SQL：数据，用于 增、改 的操作
             case 'data';
                 #   处理字段和数据的特殊字符 addslashes
+               
                 if( array_keys( $first  ) !== range(0, count( $first  ) - 1) ){
                     foreach( $first as $k => $v ){
-                        $data[addslashes($k)]=addslashes($v);
+                        $data[addslashes($k)]= is_string($v) ? addslashes($v) : $v;
                     }
                     $first = $data;
                 }
@@ -360,7 +361,11 @@ class MysqlModel extends Model{
                 if( array_keys( $this->opt['data']  ) !== range(0, count( $this->opt['data']  ) - 1) ){
                     $sql[] = '( `'.implode('`,`' ,array_keys( $this->opt["data"] ) ).'` )';
                 }
-                $sql[] = 'VALUES ( \'' .implode('\',\'' , $this->opt['data'] ).'\' ) ';
+                                
+                foreach( $this->opt['data'] as $k => $v ){
+                     $_data[] = is_string($v) ? '\'' . $v .'\'' : $v;
+                }
+                $sql[] = 'VALUES (' . implode(',', $_data) . ') ';
                 return   $this->query( implode(' ',$sql) );
             break;
             #   执行：删
