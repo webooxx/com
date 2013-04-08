@@ -299,6 +299,7 @@ class MysqlModel extends Model{
 
             #   执行查询，参数必须为 String , 非查询操作将返回 Boolean 查询操作将返回表结构的数组
             case 'query':
+                $first = trim($first);
                 if( $this->opt['debug'] ){ ddump( $first ); }
                 $this->query_result = @mysql_query($first, $this->connect_id);
                 #   每次查询过后清理查询参数条件
