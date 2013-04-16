@@ -25,7 +25,7 @@ class bcsAction extends Action{
         // $json['测试仓库-文件内容'] = $this->bucket($tempName)->read('/'.$tempName.'.txt');
         // $json['测试仓库-文件删除'] = $this->bucket($tempName)->delete('/'.$tempName.'.txt');
         // $json['测试仓库-删除'] =  $this->drop($tempName);
-
+        
         $json['仓库列表[1]'] = $this->buckets();
         $json['仓库[1]-文件列表'] = $this->bucket( 'thumbsdb' )->findAll();
         $json['仓库[1]-文件列表-详细模式'] = $this->bucket( 'thumbsdb' )->detail(true)->findAll();

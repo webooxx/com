@@ -4,7 +4,16 @@ class toolsAction extends Action{
 	#   拒绝客户端访问模式
 	function __construct(){C('SYS_VERIFY_FUNC','rbac:reject');}
 
-    #	普通搜索
+	#    扩展的正则匹配
+	function match( $pattern , $subject ){
+    	$pattern = is_string( $pattern ) ? array($pattern) : $pattern ;
+        foreach($pattern as $reg ){
+            $r[] = (int)(substr($reg, 0,1) == '!' ? !preg_match( substr($reg,1) , $subject) :  preg_match( $reg , $subject));
+    	}
+    	return array_sum($r) ==  count($pattern);
+	}
+
+    #	普通搜索,正则匹配的部分为完整路径（由只匹配文件名进化，由于有了高级match函数）
     function scan($path , $match = Null){ return $this->scand( $path , $match  , array() , false);}
     
 	#	遍历搜索
@@ -14,7 +23,7 @@ class toolsAction extends Action{
             if ($d == '.' || $d == '..') {}
             else{
                 $real = J($path,$d);
-                if(is_null($match)){  $result[] = $real ;}else{ preg_match( $match , $d)==1 && $result[]= $real ;}
+                if(is_null($match)){  $result[] = $real ;}else{$this->match( $match,$real) && $result[]= $real ;}
                 if(is_dir($real) && $rec )  {  $result = $result + $this -> scand( $real,$match, $result,$rec ); }
             }
         }
