@@ -1097,7 +1097,12 @@ class Markdown_Parser {
 				((?=^[ ]{0,'.$this->tab_width.'}\S)|\Z)	# Lookahead for non-space at line-start, or end of doc
 			}xm',
 			array(&$this, '_doCodeBlocks_callback'), $text);
-
+			
+		$text = preg_replace_callback('{
+				(`{3,})([^\1]*?)\1
+			}xm',
+			array(&$this, '_doCodeBlocks_callback_2'), $text);
+			
 		return $text;
 	}
 	function _doCodeBlocks_callback($matches) {
@@ -1111,6 +1116,11 @@ class Markdown_Parser {
 
 		$codeblock = "<pre><code>$codeblock\n</code></pre>";
 		return "\n\n".$this->hashBlock($codeblock)."\n\n";
+	}
+	function _doCodeBlocks_callback_2($m){
+    	$c[1] = $m[2];
+    	
+    	return $this->_doCodeBlocks_callback($c);
 	}
 
 

@@ -191,7 +191,15 @@ class Action {
 
     #   集成模板功能：数据赋值、视图展现操作
     function assign($n,$v=Null){ return $v===Null ?  $this->tpl_vars[$n] :  $this->tpl_vars[$n] = $v; }
-    function display($tpl=Null){ @header("Content-type:text/html"); die( $this->fetch($tpl) );}
+    function display($tpl=Null,$data=Null){
+        if(!is_null($data)){
+            foreach($data as $k=>$v){
+                $this->assign($k,$v);
+            }
+        }
+        @header("Content-type:text/html");
+        die( $this->fetch($tpl) );
+    }
     function fetch($tpl=Null,$isInc=false){
 
         #   处理 $tpl 参数，有可能：[ default:admin:login.html ] [ admin:login.html ] [ login.html ] [ login ]
