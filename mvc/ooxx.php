@@ -90,12 +90,12 @@ class ooxx {
         $a = empty($_GET[$a_key]) ? ooxx::cfg('DEF_ACT') : $_GET[$a_key];
 
         #    实例化请求的控制器模块类后魔术调用相应方法
-        $i = ooxx::mod($m);
+        $i = ooxx::mod($m,$a);
         $i->_ActCall_($a,$m);
     }
 
     #   模块管理
-    public static function mod($m){
+    public static function mod($m , $a=Null){
 
         ooxx::$argCfgs['SYS_CURRENT_MOD'] = $m;                 #   记录当前的模块名，浏览器入口、A() 均可执行到此处
         if( ooxx::$modules[$m] ){ return ooxx::$modules[$m];}
@@ -108,7 +108,18 @@ class ooxx {
             #   如果找不到控制器模块文件，将尝试去系统自带的控制器中去找
             if(!$actFile){
                 $actFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_MVC') ,ooxx::cfg('DIR_ACT'), $n.'.php' ) );
-                if(!$actFile){ die( 'Action '.$m. ' is non-existent!' );}
+            }
+            
+            #    如果找不到对应系统控制器模块文件,尝试直接展现模板
+            if( !$actFile ){
+                $tplFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_APP'), ooxx::cfg('DIR_TPL'),$m ,$a.'.html') );
+                if($tplFile){
+                    ooxx::$modules[$m] = new Action;
+                    ooxx::$modules[$m]->mod_name=$m;
+                    return ooxx::$modules[$m];
+                }else{
+                    die( 'Action '.$m. ' is non-existent!' );
+                }
             }
 
             include_once( $actFile );
