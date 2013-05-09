@@ -1,7 +1,8 @@
 <?php
 /**
- * 百度云存储快捷控制器
- */
+    百度云存储控制器
+    @引用依赖    inc/bcs/.*
+*/
 class bcsAction extends Action{
 
     function __construct(){

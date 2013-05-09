@@ -1,4 +1,10 @@
 <?php
+/**
+    通用角色权限控制器
+    @模块依赖 act/sessionAction.php
+    @数据依赖 cfg/rbac.sql
+*/
+
 class rbacAction extends Action{
     
     /**
