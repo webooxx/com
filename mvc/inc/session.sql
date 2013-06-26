@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS `wb_session` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cid` char(32) DEFAULT NULL,
+  `val` varchar(5000) DEFAULT NULL,
+  `timeout` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MEMORY DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
