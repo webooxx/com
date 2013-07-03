@@ -12,7 +12,7 @@ class ooxx {
     private static $argCfgs = array(
 
         #    项目默认设置
-        
+
         'DIR_APP'=> 'app',              #    项目目录
         'DIR_ACT'=> 'act',              #    控制器目录
         'DIR_INC'=> 'inc',              #    公共类目录名
@@ -29,7 +29,7 @@ class ooxx {
         'TPL_RIGHT_DELIMITER'=> '}-->' ,#    模板变量右分界符
 
         #    数据库设置
-        
+
         'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
         'DB_PREFIX'=> '',               #    数据库表前缀，如果是 Csv 数据库类型,表前缀此项相当于数据文件存放目录,相对于 /app/,使用 F 快捷函数读取，意味着你可以使用云存储的数据
         'DB_HOST' => '127.0.0.1:3306',
@@ -39,28 +39,28 @@ class ooxx {
         'DB_DEFCHART' => 'UTF8',
 
         #    核心设置
-        
+
         'DEF_REQ_KEY_RUT'=> 'r',        #    从 $_GET['r'] 中取得需要运行的模块类和方法，格式为 Mod/Act 或 Mod - 默认为 Mod/index
-        
+
         'DEF_REQ_KEY_MOD'=> 'm',        #    从 $_GET['m'] 中取得需要运行的模块类
         'DEF_REQ_KEY_ACT'=> 'a',        #    从 $_GET['a'] 中取得模块类需要运行的方法
-        
+
         'DEF_MOD'=> 'index',            #    默认请求的模块类
         'DEF_ACT'=> 'index',            #    默认执行的模块方法
         'DEC_ACT_EXT'=> 'Action',       #    默认模块类名后缀，例： indexAction.php
 
         #    项目运行时变量
-        
+
         'URL_INDEX'  => '.',            #    首页目录的URL 模板关键字 ../../ 会自动转换成该路径,http://127.0.0.1/
         'URL_PUBLIC' => '.',            #    模板Public目录的URL 模板关键字 ../Public/  会自动替换成该路径,类似 http://127.0.0.1/app/tpl/default/Public/
 
         #    初始化自动设置路径变量
-        
+
         'PATH_NOW'=> '.',               #    项目 index.php 的目录路径
         'PATH_MVC'=> '.',               #    项目 框架资源 路径,根据 DIR_MVC 自动设置,当项目调用了不存在的 Act、Inc 资源时，会尝试从这个目录内读取
         'PATH_APP'=> '.',               #    项目 主目录   路径,根据 DIR_APP 自动设置
         'PATH_COM'=> '.',               #    项目 模板编译 路径,根据 DIR_COM 自动设置,如果目录不可写则尝试定位到临时目录
-        
+
         #    系统其他设置
         'SYS_VERIFY_FUNC' => '',        #    系统，验证函数设置，格式为字符串，例如rbac:check，执行时传入一个参数数组 array( 'mod'=> 模块名 , 'act'=> , 方法名  )
         'SYS_CURRENT_MOD' => '',        #    系统，当前的模块名,执行模块时重设
@@ -76,11 +76,11 @@ class ooxx {
     function __construct(){ @date_default_timezone_set("PRC"); }
 
     #    初始化
-    function init(  $argv = array() , $cfgs ){
+    function init( $argv , $cfgs = array() ){
 
         #    命令行模式,将参数完全复制到 $_GET 对象中去
-        if( count($argv) > 1 ){ $al = count($argv); ooxx::$argCfgs['SYS_COMMAND_MOD'] = true; for($i=1;$i<$al;$i++){ $arg = explode('=',$argv[$i]); $_GET[$arg[0]]=$arg[1]; } }
-        
+        if( count($argv) > 1 ){ $al = count($argv); ooxx::$argCfgs['SYS_COMMAND_MOD'] = true; for($i=1;$i<$al;$i++){ $arg = explode('=',$argv[$i]); $_GET[$arg[0]]=$arg[1]; } $_REQUEST = $_GET;}
+
         #    本地访问模式
         if(  $_SERVER['HTTP_HOST'] == '127.0.0.1' ){ ooxx::$argCfgs['ENV_LOCALHOST'] = true; }
         #    合并传入的参数与系统默认设置的参数
@@ -102,23 +102,23 @@ class ooxx {
         $m_key = ooxx::cfg('DEF_REQ_KEY_MOD');
         $a_key = ooxx::cfg('DEF_REQ_KEY_ACT');
         $r_key = ooxx::cfg('DEF_REQ_KEY_RUT');
-        
+
         if( !empty($_GET[$r_key]) ){
             $r = explode('/', $_GET[$r_key] );
             $m = $r[0];
-            $a = $r[1]; 
+            $a = $r[1];
         }else{
             $m = $_GET[$m_key];
             $a = $_GET[$a_key];
         }
-       
+
         $m = empty($m) ? ooxx::cfg('DEF_MOD') : $m ;
         $a = empty($a) ? ooxx::cfg('DEF_ACT') : $a ;
-        
+
         #    实例化请求的控制器模块类后魔术调用相应方法
         $i = ooxx::mod($m,$a);
         $i->_ActCall_($a,$m);
-       
+
     }
 
     #    模块管理
@@ -136,7 +136,7 @@ class ooxx {
             if(!$actFile){
                 $actFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_MVC') ,ooxx::cfg('DIR_ACT'), $n.'.php' ) );
             }
-            
+
             #    如果找不到对应系统控制器模块文件,尝试直接展现模板
             if( !$actFile ){
                 $tplFile = realpath( ooxx::joinp(  ooxx::cfg('PATH_APP'), ooxx::cfg('DIR_TPL'),$m ,$a.'.html') );
@@ -208,7 +208,7 @@ class Action {
                 $mod = ooxx::mod($val[0]);
                 #    调用验证方法，错误信息应当在验证方法中输出。
                 if( !$mod->$val[1]( array('mod'=>$args[1],'act'=>$args[0])) )  {
-                    return false; 
+                    return false;
                 }
             }
             #    验证通过，将执行的方法名从魔术调用修改为需要执行的方法名
@@ -323,7 +323,7 @@ class MysqlModel extends Model{
 
     #    创建一个MYSQL RESOURCE 链接
     private function newlink( $sqlnewlink = false ){
-        $this->connect_id = @mysql_connect($this->sqlserver, $this->sqlusername, $this->sqlpassword , $sqlnewlinks ? $sqlnewlinks : time() );
+        $this->connect_id = @mysql_connect($this->sqlserver, $this->sqlusername, $this->sqlpassword , $sqlnewlink ? $sqlnewlink : time() );
         if($this->connect_id){
             @mysql_select_db($this->sqlselectdb) or $this->error( '数据库连接错误！ ');
             @mysql_query('set names "'.C('DB_DEFCHART').'"') or $this->error( '设置字符集错误！ ');
@@ -390,7 +390,7 @@ class MysqlModel extends Model{
             #    设置SQL：数据，用于 增、改 的操作
             case 'data';
                 #    处理字段和数据的特殊字符 addslashes
-               
+
                 if( array_keys( $first  ) !== range(0, count( $first  ) - 1) ){
                     foreach( $first as $k => $v ){
                         $data[addslashes($k)]= is_string($v) ? addslashes($v) : $v;
@@ -409,7 +409,7 @@ class MysqlModel extends Model{
                 if( array_keys( $this->opt['data']  ) !== range(0, count( $this->opt['data']  ) - 1) ){
                     $sql[] = '( `'.implode('`,`' ,array_keys( $this->opt["data"] ) ).'` )';
                 }
-                                
+
                 foreach( $this->opt['data'] as $k => $v ){
                      $_data[] = is_string($v) ? '\'' . $v .'\'' : $v;
                 }
@@ -574,8 +574,8 @@ class CsvModel extends Model{
         fclose( $tmp_link );
         if( $hasChange ){
             fclose( $this->link );
-            unlink( $tablePath );
-            rename( $tmp_path ,$tablePath );
+            unlink( $this->tablePath );
+            rename( $tmp_path ,$this->tablePath );
         }else{
             unlink( $tmp_path );
         }
@@ -610,7 +610,7 @@ class CsvModel extends Model{
     #    查询支持的条件限制
     function where( $arg ){
         #    条件限制 = < > ，多个条件连接时 以多个 M()->where()->where() 连接
-        preg_match('/(.*)([=<>])(.*)/',$first,$match);
+        preg_match('/(.*)([=<>])(.*)/',$arg,$match);
         $this->focusWhere[] = array('key'=> trim($match[1]), 'op'=>$match[2],'val'=>trim($match[3]));
         return $this;
     }
@@ -659,14 +659,14 @@ class CsvModel extends Model{
         return $state;
     }
     #    删除数据表，返回 Bool
-    function drop( $arg ){
+    function drop( ){
         fclose( $this->link );
         return unlink( $this->tablePath );
     }
 
     #    条件判断运算，确认输入的数据符合当前 focusWhere 的条件，支持 = 、 > 、< 运算符，返回 Bool
     function isWhere( $row ){
-        $where = $this->focusWhere;
+        $wheres = $this->focusWhere;
 
         foreach( $wheres as $where ){
             switch ( $where['op'] ){
@@ -696,12 +696,12 @@ function o2a($obj){ $result = array(); if(!is_array($obj)){ if($var = get_object
 #    快捷方式
 function A( $n = NULL ){ return is_null($n) ? ooxx::mod( C('DEF_MOD') ) : ooxx::mod( $n ); }
 function C( $n = NULL,$v = NULL ){ return ooxx::cfg($n,$v);}
-function F( $n , $v = NULL){  
+function F( $n , $v = NULL){
     $n = explode('::', $n);
     if( count($n)>1 ){
-        return is_null($v) ? A($n[0])->get( $n[1] ) : A($n[0])->put( $n[1] ); 
+        return is_null($v) ? A($n[0])->get( $n[1] ) : A($n[0])->put( $n[1] );
     }else{
-        return is_null($v) ? file_get_contents( $n[0] ) : file_put_contents( $n[0] , $v ); 
+        return is_null($v) ? file_get_contents( $n[0] ) : file_put_contents( $n[0] , $v );
     }
 }
 function I( $n=Null ){
