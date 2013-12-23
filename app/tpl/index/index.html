@@ -10,8 +10,11 @@
 
 </head>
 <body>
-
-<!--{ $content }-->
+<h1>INDEX</h1>
+<h2>构建列表</h2>
+<!--{ foreach($build as $item){ }-->
+<p><a href="?a=build&name=<!--{ $item }-->" target="_blank"><!--{ $item }--></a> - <a href="?a=build&code=1&name=<!--{ $item }-->" target="_blank">code</a> - <a href="?a=build&outputDir=test&name=<!--{ $item }-->" target="_blank">test</a></p>
+<!--{ } }-->
 
 </body>
 </html>

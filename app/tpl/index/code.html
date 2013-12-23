@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>show code</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" href="../Public/highlight.js/styles/default.css">
+        <script src="../Public/jquery.js"></script>
+        <script src="../Public/highlight.js/highlight.pack.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('pre code').each(function(i, e) {
+                    hljs.highlightBlock(e)
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <pre><code><?php echo $code;?></code></pre>
+    </body>
+</html>
