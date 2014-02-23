@@ -7,10 +7,15 @@
     }
     
     function index(){
-        I('Markdown');
-        $this->display('index.html',array(
-            'title' => 'ooxx-phpmvc help',
-            'content' => Markdown( F('README.md') )
-        ));
+        die('index');
+        // I('Markdown');
+        // $this->display('index.html',array(
+        //     'title' => 'ooxx-phpmvc help',
+        //     'content' => Markdown( F('README.md') )
+        // ));
+    }
+    function ok(){
+        $this->test();
+        die('ok');
     }
 }

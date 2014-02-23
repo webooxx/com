@@ -2,8 +2,9 @@
 array(
 
         #   默认配置
-        
+         
         'CMDMODE' => false,             #   命令行模式
+        'LOGBASE' => 1,                 #   日志信息的展现级别, 1info 2warring 3error；上线后选3；
 
         #   路径
         'PATH_ROOT'=> '.',              #    项目 index.php 的目录路径
@@ -19,11 +20,12 @@ array(
 
         'DIR_TPL'=> 'tpl',              #    模板目录             相对于 /app/ 项目目录
         'DIR_COM'=> '.tc',              #    模板编译目录         相对于 /app/ 项目目录
-        'DIR_THEME'=> '.',              #    模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
 
+
+        
         #    模板默认设置
-
-        'TPL_ENGINE'=> 'ooxx',          #    模板引擎类型，目前支持 none 原样输出（不使用编译目录，支持静态变量、include），ooxx 内置的模板引擎，smarty 暂不支持
+        'TPL_THEME' => '.',              #    模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
+        'TPL_ENGINE'=> 'php',          #    模板引擎类型，目前支持 none 原样输出（不使用编译目录，支持静态变量、include），ooxx 内置的模板引擎，smarty 暂不支持
         'TPL_LEFT_DELIMITER' => '<!--{',#    模板变量左分界符
         'TPL_RIGHT_DELIMITER'=> '}-->' ,#    模板变量右分界符
 

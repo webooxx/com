@@ -1,176 +1,440 @@
-#ooxx-php MVC框架文档
+#DESCRIPTION
 
-目标：在一个文件内实现基本可用的PHP框架。
+##简介
 
-## 特性
- * 一个核心文件
- * MYSQL支持链式调用读取数据
- * 支持简单文本格式CSV数据库
- * 支持简单模板，允许快速输出和插入PHP语句
- * 简单的快捷函数
- * 支持命令行模式调用
+因需要开发一个小小的功能却不得不引入庞大的框架，这种情况非常糟糕。所以最开始的目标是在一个文件内就实现简单的MVC功能以及一些方便的数据库操作、并且加入一些开发调试的快捷方法。
+
+现在很显然不是，看起来至少需要2个文件了，一个 index.php 一个 mvc.php (ps 除非你想把逻辑写在 index.php 中，否则最好还是拆到 tpl 中吧)
+
+现在有两个项目是依赖于这个项目存在的；一个博客程序，一个MarkDown文档平台。
+
+##名词解释
+
+- 控制器：指 act 目录下的各 控制器 文件
+- 方法：指动作的某个具体的方法- 
+
+
+##单文件应用 Single File
+
+- /index.php
+	- 入口文件，以及逻辑处理都在这里
+- /mvc.php
+	- 框架文件
+
+##单项目目录结构 Single Project
+
+这种目录结构适合在虚拟主机上使用，一般部署单个项目
+
+- /index.php
+	- 入口文件
+- /config.php
+    - 配置文件，一般需包含多个环境的判断以及相应的配置信息
+- /act	
+	- 可选，控制器目录（若无则直接执行对应控制器的 display 方法）
+- /tpl
+	- 模板视图目录，其下可建立多个子目录以区分主题，默认的主题目录为（ .）即为当前目录
+- /tpl/./index	
+	- 模板目录下默认主题的 index 控制器对应的视图目录
+- /tpl/./index/index.html
+	- index控制器index方法对应的默认视图，模板内可以采用PHP语法以及 inclue 其他模板
+- /tpl/./Public
+	- 模板目录下默认主题的 静态公共资源文件，模板内引用资源都需要使用 ../Public/ 的前缀来定位
+- /mod 
+	- 可选，数据模型目录
+- /com
+	- 框架目
+
+##多项目共用一个com框架文件的目录结构 Multiple projects
+
+这种配置适合有独立的服务器，可以设置网站根目录到某个具体的目录。
+
+- /app-blog
+- /app-blog/index.php
+	- 	博客项目
+- /app-xdoc/
+- /app-xdoc/index.php
+	- 	文档项目
+- /com
+	- 框架目录
+
+##访问路由处理
+目前支持两种模式
+
+ - /?m={ActionName}&a={FunctionName}
+ 	- {ActionName} 即为 Action 文件，例如 indexAction.php 就是 ?m=index
+ 	- {FuncitionName} 即为 Action 文件内的方法
+
+
+
+##特性
+
+###支持命令行模式
+
+这是我最喜欢的特性，有时候程序需要进行定时处理，尽管可以使用 URL 请求来触发，但如果是一个需要运行持续时间较长的操作，直接 URL 请求触发的方式则不太合适，需要做更多的逻辑处理。
+
+####命令行下参数的传入和获取
+
+- 传入：php index.php name=value name2=value2
+
+- 获取：在命令行模式下，所有的参数都被传入到全局的 $_GET 中，你可以使用通用方法 A('tools')->args() 来获得
+
+
+###控制器访问权限控制
+
+默认所有控制器允许所有用户进行所有操作，可以通过在控制中增加 assessControl 方法。通过方法的返回值，确定是否允许访问。例如
+
+	adminUserAction.php
+	
+	class adminUserAction extends Action{
+	
+		function assessControl(){
+			
+			return false;
+		}
+		
+		#	删除
+		function delete(){
+			
+		}
+		
+	}
+		
+
+
+###智能处理视图文件
+
+###数据读取的链式操作
+
+###入口文件对框架文件的自动引用
+
+入口文件会对3个地方进行查询以引入 com 框架资源文件
+
+- ./mvc.php
+- ./com/mvc.php
+- ./../com/mvc.php
+
+首先会假设，当前目录即是框架目录，会引用当前目录内的 mvc.php
+
+在当前目录下存在 com  目录时，会自动在其中查找框架资源
+
+否则会尝试去上一个层级去查找。这样，在切换单项目，多项目类型的目录结构时，不需要做出其他修改，只需要移动 com 目录即可。
+
+###不写控制器文件
+
+当我们只想创建一个HTML，并且使用JS来开发一些特效。我们可以不必要创建控制器目录或者文件；可以只需要编写好相应的模板文件，然后可以立刻访问看到效果！当你想加入后台的操作，随时欢迎。例如：
+
+	
+	/app/tpl/index/index.html
+	/app/tpl/index/note.html
+	
+	/app.tpl/Public/js/core.js
+	
+	index.html 的访问: localhost/
+	note.html  的访问: localhost/?a=note
+
+###共享框架的控制器
+
+com 目录下也有一个完整的 act 目录，这些目录中的控制器逻辑也是可以使用的。这需要用到一个名为 A 的快捷方法。例如：
+
+	在 /app/act/indexAction.php 中希望获得经过过滤后的$_GET数据
+
+## 控制器 Action
+
+话说不应该是  controller	么？因为 Action 好记，所以就当做是他吧。
+
+### display()
+### fetch()
+### assign()
+
+## 模板 Template
+
+###模板语法
+
+####变量输出
+
+	<!--{$value}-->
+
+####自定义输出
+
+	<!--{; echo json_encode($value) ;}-->
+
+
+	<!--{; echo json_encode($value) ;}-->
+
+####自定义结构
+
+	<!--{; if( $a = 1 ){ ;}-->
+		htmlA
+	<!--{; }else{ ;}-->
+		htmlB		
+	<!--{; } ;}-->
+
+####模板文件引用
+
+	<!--{ include inc-header.html }-->
+	这里是body开始之后
+		
+	这里是body结束之前
+	<!--{ include inc-footer.html }-->
+
+
+引用的文件名是一个字符串可以支持 **$THEME:$ACTION:** $HTML.html 加黑部分可选
+
+	default:note:index.html   # 路径解析为 /app/tpl/default/note/index.html
+	
+
+####布局文件支持
+
+以下例子展现了访问 index.html 的时候使用布局文件来免去引用头部文件和尾部文件之苦
+
+**layout.html 内容**
+	
+	<html>
+	....
+		<body>
+			<!--{ $content }-->
+		</body>
+	</html>
+
+**方法一：在 index.html 中设置**
+
+	<!--{ $this->layout = 'layout.html' } -->;
+	
+	some content;
+
+**方法二：在 indexAction 中设置**
+
+	$this->layout = 'layout.html'
+
+####模板关键字
+
+
+## 数据模型 Model
+
+### table( `name` )
+
+获得数据对象，返回的对象也是一个Model对象，所以支持后续的链式操作
+
+	new Model()->table( 'user' )
+	
+	new Model( 'table' )
+	
+	M('user')
+
+	都返回一个 Model 对象，其中已经设定了操作表为 user 
+
+####访问 csv 类型的数据表
+
+	M('csv:user')
+
+会使用默认配置中的 网站目录下 csv 目录下的 user.csv 文件
+
+
+
+### select( String | Array ) / field(  String | Array )
+
+选择字段，本步操作只会更新将要执行操作的数据字段部分
+
+	M('user')->select('username')
+
+	返回一个 Model 对象
  
-## 控制器(Action)方法
+### where( String | Array )
 
- - display( $template )
- - featch( $template )
- - assign( $name ,$value)
- - header( $type )
+选择条件
 
-##	数据模型(Model)方法
+### limit( {limit} )
 
-数据模型支持链式调用，你可以写的类似这样 `M('user')->field('id,username,email')->where('id=1')->find0();`
+条目限定
 
-不支持重型、抽象的模型类。也就是没类似 `/app/mod/userModel.php` 的文件来定义数据模型
+### find( [{condition}] ) / findAll( {limit} , [{condition}] )
 
- - field( $field )
- - where( $where )
- - find()
- - find0()
- - findAll()
+查询操作，返回一个，和返回所有。
 
-## 模板(Template)方法、关键字
+返回一条记录时，可以传入限定条件，和where一样。
 
- - include $path
- 	- 引用一个模板
- 	- $path 是一个字符串可以支持 **$THEME:$ACTION:** $HTML.html 加黑部分可选
- - ../../
- 	- 关键字，当前网站根目录路径类似于 `http:://127.0.0.1/`
- - ../Public/
-  	- 关键字，当前网站根公共目录目录路径类似于 `http:://127.0.0.1/tpl/default/Public/`
+返回所有记录时，默认是返回0-100条记录。
+ 
+
+##快捷方法
+
+### A 
+
+调用其他控制器，包括 com 内的控制器
+
+	例： 
+	$args = A('tools')->args('id:int,usrename:str(32),password:sql(32)') ;
+
+		#	$args['id']			数值类型的ID
+		#	$args['username']	最长32的位字符
+		#	$args['password']	最长32位的字符，同时进行了sql过滤，可以安全的用于构建SQL查询字符串
+
+### M
+
+使用数据模型，支持默认的 Mysql，CSV类型数据。和自定义的模型文件
+
+	例：
+	$user = M('user')->find('id=2');
+
+### 通用全局变量操作 G
+
+	读取 G('PATH_ROOT');
+	设置 G('TPL_THEME','UED',true);		#	TPL_THEME 是已存在的系统变量，所以需要增加 ture 修饰符以强制覆盖
+	删除 G('RecourdNumber',NULL)
 
 
-## 框架快捷函数
+### 通用文件操作 F
 
-一般在控制器中使用，例如要过滤提交的数据，你可以写成这样 `$args = A('tools')->args('id:int,usernmae:20,email:20') `
+通用文件存取函数，支持不同的协议。目前本地文件读写，BCS云存储文件读写。文件查找
 
-- A($moduleName)
-	- 模块间调用
-	- 示例 `$args = A('tools')->args('id:int');` 此段代码调用了 **toolsAction** 类中的 **args** 方法
-	- A调用 **tools** 模块执行时 toolsAction->args 方法内的 的 **$this->mod_name** 为 **tools**
-	- 如果当前act目录中没有对应模块,会去 mvc 目录中查找,都没有就报错。
-	- 返回一个对应的实例化后的 **Action** 类,可以直接调用其方法。
+本地文件读取的路径默认相对于 PATH_ROOT 网站的根目录
 
-- C($name,$value)
-	- 全局参数设置
-	- 用此方法设置的值在程序运行期间全局可用。
-	- 不传入 **$value** 时,为读取模式
-	- 传入的 **$value** 为 **NULL** 时,会删除这个变量,如果 **$name** 是系统变量,无效。
-	- 读取了一个不存在的 **$name** 返回 **NULL**
-	- 可以读取预设的系统变量如 `C('TPL_URL_INDEX')` 得到当前的首页的 http 路径
-
-- \* F($path,$content)
-	- 快捷存储函数
-	- 一个参数读，两个参数写入
-	- $path 参数为路径字符串，若设置为 `F('BCS:/test.Csv')` 类似的格式过 `BCSAction->get('/text.Csv')` 来得到内容
-
-- I($name)
-    - include 的快捷方式
-	- 快捷载入一个类,会自动在  app/inc mvc/inc 下寻找 $name.Class.php 的文件引入
-	- 只会引入一次
-
-- J( $p1,$p2 …)
-	- 路径合并函数
-	- 可以传入若干个参数,函数会自动合并处理各种 . / 的问题,返回的路径末尾不包括 / 
+####读取本地文件
 	
-- M($table)
-	- 快速使用一个数据表
-	- 需要预先在参数中设定数据库相关信息
-       - 'DB_ENGINE'=> 'Mysql',          #   数据库擎类型,目前支持 mysql , csv 类型
-       - 'DB_PREFIX'=> '',               #   数据库表前缀,如果是CSV类型数据库此项相当于数据文件存放目录(相对于项目主目录),~~可以使用云存储~~
-       - 'DB_HOST' => '127.0.0.1:3306',
-       - 'DB_NAME' => 'test',
-       - 'DB_USERNAME' => 'root',
-       - 'DB_PASSWORD' => '',
-       - 'DB_DEFCHART' => 'UTF8',	
+	F('csv/user.csv')->read();
+
+####读取BCS云存储的文件
+
+	F('bcs://user.csv')->read();
+
+####从URL中读取内容
+
+	F('http://user.csv')->read();
+
+####创建/修改内容
+
+	#	写入临时文件到头像图片
+	F('avatar/20130101-webooxx.png')->save( F('/tmp/tyfkuglkjg')->read() );
+
+####增量增加模式修改内容
+
+	#	添加一条日志信息到日记中
+	F('sitelog/20130101.log')->append('[13:09]	some log info!');
+	F('sitelog/20130101.log')->add('[13:09]	some log info!');
+
+####搜索文件/目录
+
+指定目录后，可以搜索所有的文件，如果需要遍历，则在 find() 中传入一个 true
+
+	F( targetDir ).match( Regexp )->find();
+	F( targetDir ).unmatch( Regexp )->find();
 	
-- S($name,$value)
-	- 系统参数设置
-	- 用法和C一样,专门用于重设系统变量,谨慎使用。
+只搜索目录
+	
+	F( targetDir )->findDir();
+	
+只搜索文件
+
+	F( targetDir )->findFile();
+
+####删除文件
+
+	F('filePath')->del();
+	F('filePath')->del();
+
+别名
+
+	F( filePath )->delete();
+	F( filePath )->rm();
+
+####重命名/移动文件
+
+	F('filePath')->rename( source , target );
+	F('filePath')->mv( source ,target );
 
 
-- dump($var)
-	- 输出一段信息,被包含在 **pre** 标签中
-	
-- ddump($var)
-	- 输出一段信息,被包含在 **pre** 标签中,并且随后 **die** 掉
+###S
 
-- json($var)
-	- 把变量 json_encode 后输出
-- jsond($var)
-	- 把变量 json_encode 后输出,并且随后 **die** 掉
+持久会话的读写。自动支持：
+
+1. PHP的SESSION功能
+2. 数据库的SESSION表操作
+3. 本地的CSV文件支持
 
 
-## 配置项(Config)
+##效率函数
 
-所有配置项均可以通过 **C($name)** 获得,通过 **S($name,$value)** 重设
+###调试 ddump /  djson
 
-* 博客程序典型配置
+###路径合并 joinp
 
-		code…
 
-* 个人mardkdown文档程序配置项
+##特殊文件说明
 
-		code…
+### 入口文件 index.php
 
-所有配置项:
+### 框架文件 mvc.php
 
-	#    项目默认设置
+包含所有的框架逻辑，默认配置。
+
+### 控制器类型的文件 indexAtion.php
+
+控制器类型的文件必须是存放在控制器目录下， 有命名规范： **控制器名Action.php**
+
+#### 引用文件
+
+##配置和常量
+
+
+配置一般写在配置文件中，可以在程序运行的时候使用C(name,value)来动态更改。
+
+例如模板目录就可以通过 C('TPL_THEME') 来修改
+
+所有的配置在 mvc.php 中都有默认的设置
+
+###常量
+
+	PATH_ROOT	站点根目录
+	PATH_COM	框架目录
+
+###运行时全局变量
+
+可以通过通用变量存取函数 G() 获得
+
+###数据库配置
+
+    #    数据库设置
+
+
+    'DB_HOST' => '127.0.0.1:3306',
+    'DB_NAME' => 'test',
+    'DB_USERNAME' => 'root',
+    'DB_PASSWORD' => '',
+    
+
+###框架默认推荐配置
+
+不推荐修改这些默认设置
+
+	#	数据库
+    
+    'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
+    'DB_PREFIX'=> '',               #    数据库表前缀    
+    'DB_DEFCHART' => 'UTF8',
+    
+	#	目录设定，相对于 app 目录
+
+	'DEF_DIR_ACT'=> 'act',               #    默认控制器目录
+	'DEF_DIR_MOD'=> 'mod',               #    数据模型目录
+	'DEF_DIR_TPL'=> 'tpl',               #    模板目录
+	'DEF_DIR_INC'=> 'inc',               #    引用文件目录名
 	
-	'DIR_APP'=> 'app',              #   项目目录
-	'DIR_ACT'=> 'act',              #   控制器目录
-	'DIR_INC'=> 'inc',              #   公共类目录名
-	'DIR_MVC'=> 'mvc',              #   框架资源目录名
+	#	模板设定
 	
-	'DIR_TPL'=> 'tpl',              #   模板目录             相对于 /app/ 项目目录
-	'DIR_COM'=> '.tc',              #   模板编译目录         相对于 /app/ 项目目录
-	'DIR_THEME'=> '.',              #   模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
-	
-	#    模板默认设置
-	
-	'TPL_ENGINE'=> 'none',          #   模板引擎类型，目前支持 none 原样输出（不使用编译目录，支持静态变量、include），default 内置的模板引擎，smarty 暂不支持
-	'TPL_LEFT_DELIMITER' => '<!--{',#   模板变量左分界符
-	'TPL_RIGHT_DELIMITER'=> '}-->' ,#   模板变量右分界符
-	
-	#    数据库设置
-	
-	'DB_ENGINE'=> 'Mysql',          #   数据库引擎类型，目前支持 Mysql ， Csv 类型
-	'DB_PREFIX'=> '',               #   数据库表前缀，如果是 Csv 数据库类型,表前缀此项相当于数据文件存放目录,相对于 /app/,使用 F 快捷函数读取，意味着你可以使用云存储的数据
-	'DB_HOST' => '127.0.0.1:3306',
-	'DB_NAME' => 'test',
-	'DB_USERNAME' => 'root',
-	'DB_PASSWORD' => '',
-	'DB_DEFCHART' => 'UTF8',
-	
-	#   核心设置
-	
-	'DEF_REQ_KEY_RUT'=> 'r',        #   从 $_GET['r'] 中取得需要运行的模块类和方法，格式为 Mod/Act 或 Mod - 默认为 Mod/index
-	
-	'DEF_REQ_KEY_MOD'=> 'm',        #   从 $_GET['m'] 中取得需要运行的模块类
-	'DEF_REQ_KEY_ACT'=> 'a',        #   从 $_GET['a'] 中取得模块类需要运行的方法
-	
-	'DEF_MOD'=> 'index',            #   默认请求的模块类
-	'DEF_ACT'=> 'index',            #   默认执行的模块方法
-	'DEC_ACT_EXT'=> 'Action',       #   默认模块类名后缀，例： indexAction.php
-	
-	#    项目运行时变量
-	
-	'URL_INDEX'  => '.',            #   首页目录的URL 模板关键字 ../../ 会自动转换成该路径,http://127.0.0.1/
-	'URL_PUBLIC' => '.',            #   模板Public目录的URL 模板关键字 ../Public/  会自动替换成该路径,类似 http://127.0.0.1/app/tpl/default/Public/
-	
-	#    初始化自动设置路径变量
-	
-	'PATH_NOW'=> '.',               #   项目 index.php 的目录路径
-	'PATH_MVC'=> '.',               #   项目 框架资源 路径,根据 DIR_MVC 自动设置,当项目调用了不存在的 Act、Inc 资源时，会尝试从这个目录内读取
-	'PATH_APP'=> '.',               #   项目 主目录   路径,根据 DIR_APP 自动设置
-	'PATH_COM'=> '.',               #   项目 模板编译 路径,根据 DIR_COM 自动设置,如果目录不可写则尝试定位到临时目录
-	
-	#   系统其他设置
-	'SYS_VERIFY_FUNC' => '',        #   系统，验证函数设置，格式为字符串，例如rbac:check，执行时传入一个参数数组 array( 'mod'=> 模块名 , 'act'=> , 方法名  )
-	'SYS_CURRENT_MOD' => '',        #   系统，当前的模块名,执行模块时重设
-	'SYS_CURRENT_ACT' => '',        #   系统，当前的方法名,执行方法时重设
-	'SYS_COMMAND_MOD' => false,     #   程序是否是以命令行模式调用，默认为false,在命令行中调用时会自动设置为true,此模式下，所有的参数将被挂载到名为 $_GET 的对象上,注意:参数需要键名
-	
+	'TPL_THEME' => '.',              #    默认模板主题目录，设置为 . 即为模板目录
+	'TPL_ENGINE'=> 'php',            #    模板引擎类型。设置为 none 则是原样输出，但支持include以及路径关键字
+	'TPL_LEFT_DELIMITER' => '<!--{', #    模板变量左分界符
+	'TPL_RIGHT_DELIMITER'=> '}-->' , #    模板变量右分界符
+
+	#    核心设置
+
+	'DEF_REQ_KEY_RUT'=> 'r',        #    从 $_GET['r'] 中取得需要运行的模块类和方法，格式为 Mod/Act 或 Mod - 默认为 Mod/index
+	'DEF_REQ_KEY_MOD'=> 'm',        #    从 $_GET['m'] 中取得需要运行的模块类
+	'DEF_REQ_KEY_ACT'=> 'a',        #    从 $_GET['a'] 中取得模块类需要运行的方法
+
+	'DEF_MOD'=> 'index',            #    默认请求的模块类
+	'DEF_ACT'=> 'index',            #    默认执行的模块方法
+	'DEC_ACT_EXT'=> 'Action',       #    默认控制器文件后缀，例： indexAction.php
 	
 
 ## 框架自带模块支持

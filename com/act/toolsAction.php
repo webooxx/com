@@ -2,7 +2,7 @@
 class toolsAction extends Action{
 	
 	#   拒绝客户端访问模式
-	function __construct(){C('SYS_VERIFY_FUNC','rbac:reject');}
+	//function __construct(){C('SYS_VERIFY_FUNC','rbac:reject');}
 
 	#    扩展的正则匹配
 	function match( $pattern , $subject ){
