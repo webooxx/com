@@ -9,7 +9,7 @@ array(
 
 
         #    数据库设置
-        'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
+        //'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
         'DB_PREFIX'=> '',               #    数据库表前缀，如果是 Csv 数据库类型,表前缀此项相当于数据文件存放目录,相对于 /app/,使用 F 快捷函数读取，意味着你可以使用云存储的数据
         'DB_HOST' => '127.0.0.1:3306',
         'DB_NAME' => 'test',
