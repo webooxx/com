@@ -9,7 +9,7 @@ array(
 
 
         #    数据库设置
-        //'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
+        'DB_ENGINE'=> 'Mysql',          #    数据库引擎类型，目前支持 Mysql ， Csv 类型
         'DB_PREFIX'=> '',               #    数据库表前缀，如果是 Csv 数据库类型,表前缀此项相当于数据文件存放目录,相对于 /app/,使用 F 快捷函数读取，意味着你可以使用云存储的数据
         'DB_HOST' => '127.0.0.1:3306',
         'DB_NAME' => 'test',
@@ -20,20 +20,21 @@ array(
         
         #    模板默认设置
         'TPL_THEME' => '.',              #    模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
-        'TPL_ENGINE'=> 'php',            #    默认PHP，如果是 smarty ，则保持引入了 smarty 模块接口，因为会调用 A('smarty')->fetch( $path , $assign )，返回编译后的代码
+        'TPL_ENGINE'=> 'php',            #    默认PHP，如果是 smarty ，则保持引入了 smarty 模块接口，因为会调用 A('smarty')->fetch( $path , $assign )，返回编译后的模板代码
         'TPL_LEFT_DELIMITER' => '<!--{', #    模板变量左分界符
         'TPL_RIGHT_DELIMITER'=> '}-->' , #    模板变量右分界符
 
-                                        #   自动重设
-        'URL_ROOT'  => '.',             #   首页目录的URL 模板关键字 ../../ 会自动转换成该路径,http://127.0.0.1/
-        'URL_PUBLIC'=> '.',             #   模板Public目录的URL 模板关键字 ../Public/  会自动替换成该路径,类似 http://127.0.0.1/app/tpl/default/Public/
-        'URL_RELATIVE'=>'.',            #   定位到，网页浏览位置，相对模板的位置
+        #   自动重设的运行时路径
+        'URL_ROOT'     => '.',           #   index.php  入口URL
+        'URL_PUBLIC'   => '.',           #   Public公共目录URL
+        'URL_RELATIVE' => '.',           #   模板当前位置的URL
  
 
 
         #    项目默认设置，不建议修改
-        'DIR_ACT'=> 'act',              #    控制器目录
-        'DIR_TPL'=> 'tpl',              #    模板目录             相对于 /app/ 项目目录
+        'DIR_ACT'=> 'act',              #    控制器目录               相对于 /app/ 项目目录
+        'DIR_TPL'=> 'tpl',              #    模板目录
+        'DIR_MOD'=> 'mod',              #    数据模型目录
 
 
         #    核心设置，不建议修改

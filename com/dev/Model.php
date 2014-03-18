@@ -8,12 +8,35 @@
 #       
 #       区分读写（只读模式、读写分离）
 
+#    数据模型管理器
+class Model{
+    private static $instaces;
+    public  static function getInstace( $table , $engine = Null ){
+        $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';
+        
+        #   先判断有无对应模型文件
+        $file_mod = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php' );
+        if( $file_mod ){
+            include_once( $file_mod );
+            $instace = new $table.$engine;
+        }else{
+            #   缓存模型对象，免得每次都新建一个
+            $instace =  Model::$instaces[$engine] ?  Model::$instaces[$engine] : Model::$instaces[$engine] = new $engine;
+        }
+        return $instace->table($table);
+    }
+}
+
+
+/*
 class Model{
 
     public $host   ;        //  主机
     public $dbname ;        //  库名
     public $prefix ;        //  表前缀
     public $tablename ;     //  表名
+
+    public $engine = 'Mysql';
 
     public $handle ;
 
@@ -27,7 +50,9 @@ class Model{
 
     // }
     public  static function getInstace( $table , $engine = Null ){
-        $engine  = ( $engine ? $engine : C('DB_ENGINE') ).'Model';
+        
+        $baseModel  = $engine ? $engine : $this->$engine;
+        
         #    缓存模型对象，免得每次都新建一个
         $instace =  Model::$instaces[$engine] ?  Model::$instaces[$engine] : Model::$instaces[$engine] = new $engine;
         return $instace->table($table);
@@ -41,8 +66,6 @@ class Model{
     function table(){}
 
 
-
-
 }
 
 #   处理 mysql 的单例请求,模型文件的请求
@@ -54,3 +77,4 @@ function M( $name , $schem = 'Mysql'){
     ox::$m[ $model ]->table( $name );
     return ox::$m[ $model ] ;
 }
+*/

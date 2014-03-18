@@ -14,18 +14,12 @@ $cfg = array( 'TPL_THEME' => '.' );
 
 #   如果需要以 single file 模式运行； 1.) 取消配置文件的引用 2.)取消下面处理器的注释
 
-class indexAction extends Action{
+// class indexAction extends Action{
     
-    function index(){
-        echo 'hello ox word!';
-    }
-}
+//     function index(){
+//         echo 'hello ox word!';
+//     }
+// }
 
-class index2Action extends Action{
-    
-    function index(){
-        A()->display('index.html',array('title'=>'xzh\'s page'));
-        //echo 'hello ox word!';
-    }
-}
+
 $app::init( $argv , $cfg );

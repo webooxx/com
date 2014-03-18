@@ -10,10 +10,10 @@ class MysqlModel extends Model{
     private $sqlselectdb;
 
     function __construct(){
-        $this->sqlserver   = C('DB_HOST');
-        $this->sqlusername = C('DB_USERNAME');
-        $this->sqlpassword = C('DB_PASSWORD');
-        $this->sqlselectdb = C('DB_NAME');
+        $this->sqlserver   = ox::c('DB_HOST');
+        $this->sqlusername = ox::c('DB_USERNAME');
+        $this->sqlpassword = ox::c('DB_PASSWORD');
+        $this->sqlselectdb = ox::c('DB_NAME');
         $this->newlink('default');
     }
 
@@ -22,7 +22,7 @@ class MysqlModel extends Model{
         $this->connect_id = @mysql_connect($this->sqlserver, $this->sqlusername, $this->sqlpassword , $sqlnewlink ? $sqlnewlink : time() );
         if($this->connect_id){
             @mysql_select_db($this->sqlselectdb) or $this->error( '数据库连接错误！ ');
-            @mysql_query('set names "'.C('DB_DEFCHART').'"') or $this->error( '设置字符集错误！ ');
+            @mysql_query('set names "'.ox::c('DB_DEFCHART').'"') or $this->error( '设置字符集错误！ ');
         }else{
             $this->error( '服务器连接错误！ ' );
             return $this;
@@ -49,7 +49,7 @@ class MysqlModel extends Model{
                 $this->opt = array();
                 if(!$this->query_result){ return $this->error('SQL查询错误！');}
                 if( is_resource( $this->query_result ) ){
-                    while( $row = mysql_fetch_assoc( $this->query_result )) { $result[] = $row; }
+                    while( $row = mysql_fetch_assoox::c( $this->query_result )) { $result[] = $row; }
                     return $result;
                 }
 
@@ -65,7 +65,7 @@ class MysqlModel extends Model{
                 }
                 foreach( $_tableA as $item ){
                     $tableMap = preg_split('/(\s+as\s+|\s+)/i',trim($item));
-                    $_tableB[] = '`'.C('DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
+                    $_tableB[] = '`'.ox::c('DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
                 }
                 $this->opt['table'] = implode( ' , ',$_tableB );
             break;

@@ -5,7 +5,7 @@ class CsvModel extends Model{
 
     #    处理数据路径
     function __construct(){
-        $this->tablePre = J( C('PATH_APP'),C('DB_PREFIX') );
+        $this->tablePre = J( ox::c('PATH_APP'),ox::c('DB_PREFIX') );
         $this->tableExt = '.csv';
         if( !realpath( $this->tablePre ) ){
             mkdir( $this->tablePre , 0700);
