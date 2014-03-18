@@ -19,6 +19,7 @@ class ox {
     static function c( $n,$v = NULL ){
         return $v === NULL ? ox::$c[$n] : ox::$c[$n] = $v;
     }
+
     #   日志管理
     static function l( $msg , $level = 1 , $show = 0 ){
         ox::$l[] = array(
@@ -37,6 +38,7 @@ class ox {
         }
         return true;
     }
+
     #   模块管理
     public static function m( $req ){
 
@@ -102,6 +104,7 @@ class ox {
             'a' => empty($a) || is_numeric( $a) ? ox::c('DEF_ACT') : $a,
         );
     }
+    
     #    框架运行
     static function init( $argv , $cfgs = array() ){
 
@@ -135,6 +138,8 @@ class ox {
 
 #   控制器模块
 require_once('dev/Action.php');
+#   控制器模块
+require_once('dev/Model.php');
 #   开发调试函数
 require_once('dev/funcs_debug.php');
 #    快捷方式

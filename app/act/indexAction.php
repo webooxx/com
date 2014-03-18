@@ -8,12 +8,16 @@
     
     function index(){
 
-        $this->display();
+        //$this->display();
         // I('Markdown');
         // $this->display('index.html',array(
         //     'title' => 'ooxx-phpmvc help',
         //     'content' => Markdown( F('README.md') )
         // ));
+        // 
+        
+        $m = new MysqlModel;
+        dump( $m->yes('ok') );
     }
 
 }
