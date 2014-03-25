@@ -1,6 +1,6 @@
 <?php
 
-class userMysqlModel extends MysqlModel{
+class User extends MysqlModel{
 
     function __construct(){
 

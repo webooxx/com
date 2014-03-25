@@ -10,6 +10,7 @@
      */
     function index(){
 
+        djson( M('user')->findAll() );
         $this->display();
     }
 

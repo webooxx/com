@@ -14,47 +14,41 @@ class Model{
 
     public  static function getInstace( $table = false , $engine = Null ){
        
-        $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';  #   MysqlModel || CsvModel  => userMysqlModel || userCsvModel => user.php
+        $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';  #   MysqlModel || CsvModel  => userMysqlModel || userCsvModel => User.php
 
-        #   是否已缓存自定义数据模型
-        if( $table ){
-            $mod_custom = $table.$engine;
-            if( Model::$instaces[$mod_custom] ){
-                return Model::$instaces[$mod_custom];
-            }
-        }
-        #   是否已缓存通用基础数据模型
-        if( Model::$instaces[$engine] ){
-            return Model::$instaces[$mod_custom];
+
+        #   是否已缓存
+        $cache_name = $table;
+        if( Model::$instaces[$cache_name] ){
+            return Model::$instaces[$cache_name];
         }
 
-
-        #   先加载模型文件
+        #   检测通用模型和自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod = $mod_app ? $mod_app : $mod_com ;
 
         if( $mod ){
-            include_once( $file_mod );
-            Model::$instaces[$engine] = new $table.$engine;
+            include_once( $mod );
+            Model::$instaces[$cache_name] = new $cache_name;
         }else{
-            Model::$instaces[$engine] = new $engine;
+            Model::$instaces[$cache_name] = new $engine;
         }
         return $instace->table($table);
     }
 
 
-    public $host;    #  主机
-    public $db;      #  库
-    public $prefix;  #  表前缀
-    public $table;   #  表
-    
-    public $username;  #  用户名
-    public $password;  #  密码
-
-
-    public $handle;   #  链接对象
-    public $operate;  #  操作栈
+//    public $host;    #  主机
+//    public $db;      #  库
+//    public $prefix;  #  表前缀
+//    public $table;   #  表
+//
+//    public $username;  #  用户名
+//    public $password;  #  密码
+//
+//
+//    public $handle;   #  链接对象
+//    public $operate;  #  操作栈
 
     #  数据集/表 是否存在,由子类实现
     public function isExist(){}
@@ -67,21 +61,21 @@ class Model{
 
     function __call( $do,$args = array() ){
         switch ( $do ) {
-            
+
             case 'query':   #   最终执行 => 在此步完成  Debug、性能策略
 
             break;
 
             #   构建最终查询串
-            case 'add':     
-                
+            case 'add':
+
             break;
 
             case 'del':
             case 'delete':
 
             break;
-            
+
             case 'save':
 
             break;
@@ -93,25 +87,25 @@ class Model{
             break;
             #   构建选项
             case 'table':
-            
+
             break;
 
             case 'where':
-            
+
             break;
             case 'data':
-            
+
             break;
 
             #   展现
             case 'limit':
-            
+
             break;
             case 'group':
-            
+
             break;
             case '':
-            
+
             break;
         }
         ddump($do);
