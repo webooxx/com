@@ -1,23 +1,43 @@
 <?php
  class indexAction extends Action{
-#    这是从系统自动创建的示例模块文件
 
     function __construct(){
-        #    父类构造器中没有逻辑，可以尽情编写
+        
     }
-    
+
+    /**
+     * 首页文章列表控制器
+     */
     function index(){
 
-        //$this->display();
-        // I('Markdown');
-        // $this->display('index.html',array(
-        //     'title' => 'ooxx-phpmvc help',
-        //     'content' => Markdown( F('README.md') )
-        // ));
-        // 
-        
-        $m = new MysqlModel;
-        dump( $m->yes('ok') );
+        $this->display();
+    }
+
+
+    /**
+     * 文章处理控制器
+     */
+    function p(){
+
+    }
+    /**
+     * 页面处理控制器
+     */
+    function page(){
+
+    }
+    /**
+     * 分类文章列表处理控制器
+     */
+    function c(){
+
+    }
+
+    /**
+     * 标签分类文章列表处理控制器
+     */
+    function tags(){
+
     }
 
 }

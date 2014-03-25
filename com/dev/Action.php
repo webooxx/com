@@ -51,8 +51,7 @@ class Action {
             }
         }
 
-
-        ox::c('URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . rtrim( dirname( $_SERVER['SCRIPT_NAME'] ) ,'/' ).'/'  );
+        ox::c('URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . rtrim( substr(  ox::c('PATH_APP') , strlen( $_SERVER['DOCUMENT_ROOT'] ) ) ,'/' ).'/'  );
         ox::c('URL_PUBLIC'   , ox::c('URL_ROOT')  . implode('/', array(  ox::c('DIR_TPL') ,  ox::c('TPL_THEME') ,'Public/' ) ) );
         ox::c('URL_RELATIVE' , trim(dirname( array_pop( explode( ox::c('PATH_APP') , $path_final) )), '/' ) );
 
