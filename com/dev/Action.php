@@ -18,7 +18,6 @@ class Action {
         }
         @header("Content-type:text/html");
         die( $this->fetch( $name) );
-        
     }
     #   模板获取计算
     function _action_fetch( $args = array() , $isInc = false ){
@@ -111,13 +110,13 @@ class Action {
             $a = $args[0]['a'];
             #   需要验证的话
             if(  method_exists($this, 'filterAssess') && !$this->filterAssess($a) ){
-                ox::l('[Action->_call_] Permission denied!',99,99);
+                ox::l('模块 filterAssess 验证不通过!',99,99);
             }            
             if( method_exists($this, $a) ){
-                ox::l('[Action->_call_] Broswer Call Method '.$m.'->'.$a.' Ready to run!');
+                ox::l('浏览器调用 '.$m.'->'.$a.' 已准备!');
                  return $this->$a();
             }else{
-                ox::l('[Action->_call_] Broswer Call Method '.$m.'->'.$a. ' is non-existent!', LEVEL_WARRING );
+                ox::l('浏览器调用 '.$m.'->'.$a. ' 不存在!', LEVEL_WARRING );
                 #   尝试展现模板 Line:136
             }
         }else{
@@ -125,21 +124,21 @@ class Action {
             $realname = '_action_'.$name ;
             $a = $name;
             if( method_exists($this, $realname) ){
-                ox::l('[Action->__call] Call Method '.$a.' Ready to run!');
+                ox::l('模块调用 '.$a.'  已准备!');
                 return $this->$realname( $args );
             }else{
-                ox::l('Action->__call] Call Method '.$a. ' is non-existent!', LEVEL_WARRING );
+                ox::l('模块调用 '.$a. ' 不存在!', LEVEL_WARRING );
                 #   尝试展现对应方法的模板
             }
         }
         #   尝试展现模板
         $template = realpath( $this->Module_From.'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m.'/'.$a.'.html' );
 
-        ox::l(' Try to display Template '.$template ,LEVEL_INFO );
+        ox::l('尝试展现模板 '.$template ,LEVEL_INFO );
         if( $template ){
             return $this->display();
         }else{
-            ox::l( 'Module & Template is non-existent!' , LEVEL_ERROR , 3 ) ;
+            ox::l( '模块和模板都不存在!' , LEVEL_ERROR , 3 ) ;
         }
     }
 }

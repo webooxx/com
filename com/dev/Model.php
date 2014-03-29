@@ -6,204 +6,282 @@
 #       
 #       支持 mod/userModel.php    数据模型自定义（侦测数据源存在[、数据字段完整、数据字段格式校验、]数据表自动构建）
 #       
-#       区分读写（只读模式、读写分离）
+#       区分读写（只读模式、读写分离）一个写，多个读
+#
+#       多数据库支持
+#
+#
+#   M('user')->db(2)->findAll();
+#
+#
 
 #    数据模型管理器
 class Model{
+
     private static $instaces;
-
     public  static function getInstace( $table = false , $engine = Null ){
-       
         $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';  #   MysqlModel || CsvModel  => userMysqlModel || userCsvModel => User.php
-
-
         #   是否已缓存
         $cache_name = $table;
         if( Model::$instaces[$cache_name] ){
             return Model::$instaces[$cache_name];
         }
-
         #   检测通用模型和自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod = $mod_app ? $mod_app : $mod_com ;
 
         if( $mod ){
+            #   自定义模型
             include_once( $mod );
             Model::$instaces[$cache_name] = new $cache_name;
         }else{
             Model::$instaces[$cache_name] = new $engine;
         }
-        return $instace->table($table);
+        #   设置参数配置
+        return Model::$instaces[$cache_name]->_init_( $table );
     }
 
+    public $db;
+    public $dbKey = -1;
 
-//    public $host;    #  主机
-//    public $db;      #  库
-//    public $prefix;  #  表前缀
-//    public $table;   #  表
-//
-//    public $username;  #  用户名
-//    public $password;  #  密码
-//
-//
-//    public $handle;   #  链接对象
-//    public $operate;  #  操作栈
+    public $handle;   #  链接对象
+    public $operate;  #  操作栈
 
-    #  数据集/表 是否存在,由子类实现
-    public function isExist(){}
+    function __call( $act , $args = array() ){
+        $arg = $args[0];
+        switch ( $act ) {
 
-    #  设置
-    public function _host(   $n ){ $this->host = $n; return $this;   }
-    public function _db(     $n ){ $this->db = $n; return $this;     }
-    public function _prefix( $n ){ $this->prefix = $n; return $this; }
-    public function _table(  $n ){ $this->table = $n; return $this;  }
+            #   初始化操作
+            case '_init_handle' :
+                $this->operate = array();
 
-    function __call( $do,$args = array() ){
-        switch ( $do ) {
+                #   多库结构
+                $this->db = ox::c('DBS');
+                $this->db[-1] = array(
+                    'DB_ENGINE'=> ox::c('DB_ENGINE'),
+                    'DB_PREFIX'=> ox::c('DB_PREFIX'),
+                    'DB_HOST' => ox::c('DB_HOST'),
+                    'DB_NAME' => ox::c('DB_NAME'),
+                    'DB_USERNAME' => ox::c('DB_USERNAME'),
+                    'DB_PASSWORD' => ox::c('DB_PASSWORD'),
+                    'DB_DEFCHART' => ox::c('DB_DEFCHART'),
+                );
 
-            case 'query':   #   最终执行 => 在此步完成  Debug、性能策略
+                #@todo 处理从库中信息不全的情况
 
-            break;
+//                if( $arg && !isset($this->operate['table']) ){
+//                    $this->table( $arg ) ;
+//                }
 
-            #   构建最终查询串
-            case 'add':
+                #@todo 处理 custom model 中自定表、库的情况，控制器 M 设置表、类型、库的情况
 
-            break;
+                if( !$this->handle ){
+                    $this->handle = $this->connect();
+                }
 
-            case 'del':
+                break;
+
+            #   数据库选择
+            case 'db':
+                $this->dbKey = $arg;
+                break;
+
+
+
+            #   构建最终SQL
+            case 'add':             #   增
+                if( $arg ){ $this->data($arg); }
+                $sql[] = 'INSERT INTO';
+                $sql[] = $this->operate['table'];
+                #    有键名的数据
+                if( array_keys( $this->operate['data']  ) !== range(0, count( $this->operate['data']  ) - 1) ){
+                    $sql[] = '( `'.implode('`,`' ,array_keys( $this->operate["data"] ) ).'` )';
+                }
+
+                foreach( $this->operate['data'] as $k => $v ){
+                    $_data[] = is_string($v) ? '\'' . $v .'\'' : $v;
+                }
+                $sql[] = 'VALUES (' . implode(',', $_data) . ') ';
+                return   $this->query( implode(' ',$sql) );
+                break;
+
+            case 'del':             #   删
             case 'delete':
+                if( $arg ){ $this->where($arg); }
+                if( empty( $this->operate['where'] ) ){
+                    if(  $this->operate['debug'] == 1 ){
+                        ox::l('MQL查询错误！不允许无条件删除',3,3);
+                    }
+                    return false;
+                }
+                $sql[] = 'DELETE FROM';
+                $sql[] = $this->operate['table'];
+                $sql[] = 'WHERE '.$this->operate['where'];
+                $sql[] = empty( $this->operate['limit'] ) ? ' LIMIT 1 ' : 'LIMIT ' .$this->operate['limit'];
+                return $this->query( implode(' ',$sql) );
+                break;
 
-            break;
+            case 'save':            #   改
+                if( $arg ){ $this->data($arg); }
+                if( empty( $this->operate['where'] ) ){
+                    if(  $this->operate['debug'] == 1 ){
+                        ox::l('MQL查询错误！不允许无条件删除',3,3);
+                    }
+                    return false;
+                }
+                foreach ($this->operate['data'] as $k => $v) {  $kvs[] = '`'.$k.'` = \''.$v.'\''; }
+                $sql[] = 'UPDATE';
+                $sql[] = $this->operate['table'];
+                $sql[] = 'SET';
+                $sql[] = implode(',', $kvs);
+                $sql[] = 'WHERE '.$this->operate['where'];
+                $sql[] = empty( $this->operate['limit'] ) ? ' LIMIT 1 ' : 'LIMIT ' .$this->operate['limit'];
+                return $this->query( implode(' ',$sql) );
+                break;
 
-            case 'save':
-
-            break;
-            case 'find':
-
-            break;
+            case 'find':            #   查
+                $arg = $arg ? $arg : '1';
+                $result = $this->findAll( $arg ? $arg : '1' );
+                return ( count($result) == 1 ) ? $result[0] :$result ;
+                break;
             case 'findAll':
+                if( $arg ){ $this->limit($arg); }
+                $sql[] = 'SELECT';
+                $sql[] = empty($this->operate['field']) ? '*' : $this->operate['field'] ;
+                $sql[] = 'FROM';
+                $sql[] = $this->operate['table'];
+                $sql[] = $this->operate['where']  ? 'WHERE '   .$this->operate['where'] : '';
+                $sql[] = $this->operate['group']  ? 'GROUP BY '.$this->operate['group'] : '';
+                $sql[] = $this->operate['order']  ? 'ORDER BY '.$this->operate['order'] : '';
+                $sql[] = $this->operate['limit']  ? 'LIMIT '   .$this->operate['limit'] : '';
+                $sql[] = $this->operate['having'] ? 'HAVING '  .$this->operate['having'] : '';
+                return $this->query( implode(' ',$sql) );
+                break;
 
-            break;
-            #   构建选项
+            #   选项设定
             case 'table':
-
-            break;
+                if( count(explode(',',$arg))>1 ){
+                    $_tableA = explode(',',$arg);
+                }else{
+                    $_tableA[] = $arg;
+                }
+                foreach( $_tableA as $item ){
+                    $tableMap = preg_split('/(\s+as\s+|\s+)/i',trim($item));
+                    $_tableB[] = '`'.ox::c('DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
+                }
+                $this->operate['table'] = implode( ' , ',$_tableB );
+                break;
 
             case 'where':
-
-            break;
+                if( is_string($arg) ){
+                    $this->operate[$act] = $arg;
+                }else if( is_array($arg) ) {
+                    foreach ( $arg as $k => $v) {
+                        $kvs[] = '`'.addslashes($k).'` = '. ( is_int( $v ) ?  $v : '\''.addslashes($v).'\'' );
+                    }
+                    $this->operate[$act] = implode(' and ',$kvs);
+                }
+                break;
             case 'data':
+                if( array_keys( $arg  ) !== range(0, count( $arg  ) - 1) ){
+                    foreach( $arg as $k => $v ){
+                        $data[addslashes($k)]= is_string($v) ? addslashes($v) : $v;
+                    }
+                    $arg = $data;
+                }
+                $this->operate[$act] = $arg;
+                break;
 
-            break;
-
-            #   展现
+            case 'select':
+            case 'field':
+                $this->operate['field'] = $arg;
+                break;
             case 'limit':
-
-            break;
+                if( $args[1] ){
+                    $this->operate['limit'] = implode( ',', $args );
+                }else{
+                    $limit = explode(',', $arg);
+                    if( count($limit) == 1 ){
+                        array_unshift( $limit , 0 );
+                    }
+                    $this->operate['limit'] = implode( ',',$limit );
+                }
+                break;
             case 'group':
+                $this->operate[$act] = $arg;
+                break;
 
-            break;
-            case '':
+            #   检测
+            case 'isConnect':
 
-            break;
+                break;
+            case 'isExist':
+
+                break;
+
+
+            #   必须实现的方法
+            case 'query':
+            case 'connect':
+                ox::l('子类未实现操作 '. $act .'!',99,99);
+                break;
+
+            default:
+                $this->operate[$act] = $arg;
+                break;
         }
-        ddump($do);
+        return $this;
     }
-
-}
-
-#   MYSQL的模型基类
-class MysqlModel extends Model{
-
-
-    public function isExist(){
-
-    }
-
-
-    #   连接操作
-    public function _handle(){}
-
-    #   构建最终SQL
-    public function add(){}         #   增
-    public function del(){}         #   删
-    public function delete(){}
-    public function save(){}        #   改
-    public function update(){}
-    public function find(){}        #   查
-    public function findAll(){}
-
-    public function count(){}       #   统计
-
-    #   执行
-    public function query(){}
-    
-    #   选项
-    public function table(){}   #   表
-    public function field(){}   #   选择的字段
-
-    public function where(){}   #   条件查询
-    public function data(){}    #   字段值暂存
-    
-    #   展现
-    public function limit(){}
-    public function group(){}
-    public function order(){}
-    public function having(){}
 
 }
 
 function M( $t = false , $e = null ){
     return Model::getInstace( $t , $e );
 }
-/*
-class Model{
 
-    public $host   ;        //  主机
-    public $dbname ;        //  库名
-    public $prefix ;        //  表前缀
-    public $tablename ;     //  表名
+#   MYSQL的模型基类
+class MysqlModel extends Model{
 
-    public $engine = 'Mysql';
 
-    public $handle ;
+        function connect( ){
+            $db = $this->db[$this->dbKey];
+            if( $db['DB_ENGINE'] == 'Mysql' ){
+                $handle = @mysql_connect( $db['DB_HOST'] , $db['DB_USERNAME'] ,  $db['DB_PASSWORD'] , time() );
+            }
+            if($handle){
+                @mysql_select_db( $db['DB_NAME'] ) or ox::l( '没有找到数据库!',99,99);
+                @mysql_query('set names "'.$db['DB_DEFCHART'].'"') or  ox::l( '字符集设置错误!',2 );
+            }else{
+                ox::l( '无法连接到服务器!',99,99);
+            }
+            return $handle;
+        }
 
-    #   连接&初始化
-    public function linkDb(){
+        function query( $sql ){
+            $sql = trim($sql);
 
-    }
+            $resource = @mysql_query( $sql, $this->handle );
+            #    每次查询过后清理查询参数条件
 
-    // #   初始化构建,用于 new Model() 的情况
-    // function __construct( $config ){
 
-    // }
-    public  static function getInstace( $table , $engine = Null ){
-        
-        $baseModel  = $engine ? $engine : $this->$engine;
-        
-        #    缓存模型对象，免得每次都新建一个
-        $instace =  Model::$instaces[$engine] ?  Model::$instaces[$engine] : Model::$instaces[$engine] = new $engine;
-        return $instace->table($table);
-    }
+            if(!$resource){
+                ox::l(mysql_error(),3);
+                if(  $this->operate['debug'] == 1 ){
+                    ox::l('MYSQL查询错误!',3,3);
+                }else{
+                    die('sql err!');
+                }
 
-    #   选择数据库/目录
-    function db(){}
-    #   设置前缀
-    function pre(){}
-    #   设置表名
-    function table(){}
+            }
 
+            $this->operate = array();
+            if( is_resource( $resource ) ){
+
+                while( $row = mysql_fetch_assoc( $resource )) { $result[] = $row; }
+                return (array)$result;
+            }
+            return $resource;
+        }
 
 }
-
-#   处理 mysql 的单例请求,模型文件的请求
-function M( $name , $schem = 'Mysql'){
-    $model = $schem.'Model';
-    if(!ox::$m[ $model ] ){
-        ox::$m[ $model ] = new $model;
-    }
-    ox::$m[ $model ]->table( $name );
-    return ox::$m[ $model ] ;
-}
-*/

@@ -7,7 +7,7 @@
 define('LEVEL_INFO', 1);
 define('LEVEL_WARRING', 2);
 define('LEVEL_ERROR', 3);
-
+error_reporting(0);
 #    框架入口核心类
 class ox {
 
@@ -26,7 +26,6 @@ class ox {
             'LEVEL'=> $level,
             'TIME' => date('Y-m-d H:i:s'),
             'INFO' => array_slice( debug_backtrace() ,0,2),
-
         );
         if( $show > 0 ){
             foreach (ox::$l as $l ) {
@@ -34,7 +33,7 @@ class ox {
                     $json[]  = $l;
                 }
             }
-            die( json_encode( array_reverse( $json )) );
+            die( json_encode( array_reverse( (array)$json )) );
         }
         return true;
     }
@@ -48,12 +47,12 @@ class ox {
         $class = $m.ox::c('DEC_ACT_EXT');
 
         if( ox::$m[$m] ){
-            ox::l( 'Module Class is loaded!' , LEVEL_WARRING );
+            ox::l( '模块已缓存!' , LEVEL_WARRING );
             return ox::$m[$m];
         }else{
             if( class_exists( $class ) ){
                 ox::$m[$m] = new $class;
-                ox::l( 'Module Class in single!', LEVEL_WARRING );
+                ox::l( '模块已经预加载了!', LEVEL_WARRING );
             }else{
 
                 #   模块文件
@@ -67,18 +66,18 @@ class ox {
 
                 #   仍然没有模块文件，对应用目录下的模板目录进行侦测
                 if(!$act){
-                    ox::l( 'Module is non-existent!', LEVEL_WARRING );
+                    ox::l( '模块不存在!', LEVEL_WARRING );
                     $tpl = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m );
-                    !$tpl ? ox::l( 'Module & Template is non-existent!' , LEVEL_ERROR , 3 ) : ox::$m[$m] = new Action;
+                    !$tpl ? ox::l( '模板也不存在!' , LEVEL_ERROR , 3 ) : ox::$m[$m] = new Action;
                 }else{
-                    ox::l( 'Module is existent!', LEVEL_INFO );
+                    ox::l( '模块存在!', LEVEL_INFO );
                     include_once( $act );
                     ox::$m[$m] = new $class;
                 }
 
             }
         }
-        ox::l( $m.' -> '.$a .' from '. $s, LEVEL_INFO );
+        ox::l( '运行 ' .$m.'Action -> '.$a , LEVEL_INFO );
         ox::$m[$m]->Module_Name = $m;
         ox::$m[$m]->Module_From = $s;
         ox::$m[$m]->Method_Name = $a;
@@ -138,7 +137,7 @@ class ox {
 
 #   控制器模块
 require_once('dev/Action.php');
-#   控制器模块
+#   数据模型
 require_once('dev/Model.php');
 #   开发调试函数
 require_once('dev/funcs_debug.php');
