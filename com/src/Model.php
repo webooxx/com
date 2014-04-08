@@ -30,7 +30,6 @@ class Model{
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
         $mod = $mod_app ? $mod_app : $mod_com ;
-
         if( $mod ){
             #   自定义模型
             include_once( $mod );
@@ -67,12 +66,6 @@ class Model{
                     'DB_PASSWORD' => ox::c('DB_PASSWORD'),
                     'DB_DEFCHART' => ox::c('DB_DEFCHART'),
                 );
-
-                #@todo 处理从库中信息不全的情况
-
-//                if( $arg && !isset($this->operate['table']) ){
-//                    $this->table( $arg ) ;
-//                }
 
                 #@todo 处理 custom model 中自定表、库的情况，控制器 M 设置表、类型、库的情况
 
@@ -238,50 +231,4 @@ class Model{
 
 function M( $t = false , $e = null ){
     return Model::getInstace( $t , $e );
-}
-
-#   MYSQL的模型基类
-class MysqlModel extends Model{
-
-
-        function connect( ){
-            $db = $this->db[$this->dbKey];
-            if( $db['DB_ENGINE'] == 'Mysql' ){
-                $handle = @mysql_connect( $db['DB_HOST'] , $db['DB_USERNAME'] ,  $db['DB_PASSWORD'] , time() );
-            }
-            if($handle){
-                @mysql_select_db( $db['DB_NAME'] ) or ox::l( '没有找到数据库!',99,99);
-                @mysql_query('set names "'.$db['DB_DEFCHART'].'"') or  ox::l( '字符集设置错误!',2 );
-            }else{
-                ox::l( '无法连接到服务器!',99,99);
-            }
-            return $handle;
-        }
-
-        function query( $sql ){
-            $sql = trim($sql);
-
-            $resource = @mysql_query( $sql, $this->handle );
-            #    每次查询过后清理查询参数条件
-
-
-            if(!$resource){
-                ox::l(mysql_error(),3);
-                if(  $this->operate['debug'] == 1 ){
-                    ox::l('MYSQL查询错误!',3,3);
-                }else{
-                    die('sql err!');
-                }
-
-            }
-
-            $this->operate = array();
-            if( is_resource( $resource ) ){
-
-                while( $row = mysql_fetch_assoc( $resource )) { $result[] = $row; }
-                return (array)$result;
-            }
-            return $resource;
-        }
-
 }

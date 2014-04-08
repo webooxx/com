@@ -1,10 +1,10 @@
 <?php
 
-class User extends MysqlModel{
+class user extends Model{
 
     function __construct(){
 
-        $this->table('user_custom');
+      
 
     }
 

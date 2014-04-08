@@ -1,4 +1,25 @@
 <?php
+class CsvModel extends Model{
+
+    function connect( ){
+        $db = $this->db[$this->dbKey];
+        
+        $db['path'] = ox::c('PATH_APP');
+
+        if( $db['DB_ENGINE'] == 'Csv' ){
+            $handle = @mysql_connect( $db['DB_HOST'] , $db['DB_USERNAME'] ,  $db['DB_PASSWORD'] , time() );
+        }
+        if($handle){
+            @mysql_select_db( $db['DB_NAME'] ) or ox::l( '没有找到数据库!',99,99);
+            @mysql_query('set names "'.$db['DB_DEFCHART'].'"') or  ox::l( '字符集设置错误!',2 );
+        }else{
+            ox::l( '无法连接到服务器!',99,99);
+        }
+        return $handle;
+    }
+
+}
+/*
 #    CSV数据模型类
 class CsvModel extends Model{
     public  $opt = array();
@@ -206,3 +227,4 @@ class CsvModel extends Model{
         return true;
     }
 }
+*/
