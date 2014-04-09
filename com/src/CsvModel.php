@@ -1,23 +1,52 @@
 <?php
+require_once('Model.php');
+/**
+ * @file Csv通用数据模型支持
+ * @description  该模块提供一个Csv通用数据模型类
+ */
+/**
+ * @name CsvModel Csv通用数据模型类
+ * @class
+ * @extends Model
+ * @description  CsvModel 支持在本地以文本形式读写通用的Csv文件数据，可以免除数据库的需求
+ * 约定第一行作为字段信息
+ */
 class CsvModel extends Model{
 
-    function connect( ){
-        $db = $this->db[$this->dbKey];
-        
-        $db['path'] = ox::c('PATH_APP');
+    #   确认 主机连接/目录
+    function connect( $db ){
 
-        if( $db['DB_ENGINE'] == 'Csv' ){
-            $handle = @mysql_connect( $db['DB_HOST'] , $db['DB_USERNAME'] ,  $db['DB_PASSWORD'] , time() );
+        $path = ox::c('PATH_APP') .'/'. $db['DB_NAME'] ;
+        if( !realpath($path) ){
+            mkdir( $path , 0700);
         }
-        if($handle){
-            @mysql_select_db( $db['DB_NAME'] ) or ox::l( '没有找到数据库!',99,99);
-            @mysql_query('set names "'.$db['DB_DEFCHART'].'"') or  ox::l( '字符集设置错误!',2 );
-        }else{
-            ox::l( '无法连接到服务器!',99,99);
+        $this->operate['PATH_DB'] = $path . (realpath($path) ? '' : '不存在，且目录不具备写权限!');
+        if( !realpath($path) ){
+            ox::l( $this->operate['PATH_DB']  ,3, 3);
         }
-        return $handle;
+
+        return 'connected';
     }
 
+    #   确认文件并且设置handle
+    function table($table){
+
+        $path = $this->operate['PATH_DB'] .'/'.$table.'.csv' ;
+
+        if( !file_exists($path) ){
+            $this->operate['PATH_TABLE'] = $path.' 文件不存在!';
+            ox::l( $this->operate['PATH_TABLE']  ,3, 3);
+            $this->handle = false;
+        }
+
+        
+
+        return $this;
+    }
+    function create(){
+
+    }
+    function query(){}
 }
 /*
 #    CSV数据模型类

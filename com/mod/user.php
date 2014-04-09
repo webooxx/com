@@ -1,11 +1,17 @@
 <?php
 
-class user extends Model{
+class user extends CsvModel{
 
     function __construct(){
+    }
 
-      
-
+    function structure(){
+        return array(
+            'id' => 'int(10) unsigned NOT NULL AUTO_INCREMENT' ,
+            'username' => 'varchar(1000) NOT NULL',
+            'password' => 'varchar(128) NOT NULL',
+            'ct' => 'datetime DEFAULT NULL COMMENT \'创建时间\'',
+        );
     }
 
     function mapType(){

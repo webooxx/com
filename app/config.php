@@ -9,10 +9,5 @@ return array(
     'DB_NAME' => 'lifeword',
     'DB_USERNAME' => 'root',
     'DB_PASSWORD' => 'root',
-    'DB_DEFCHART' => 'UTF8',
-    'DBS' => array(
-        array(
-            'DB_HOST' => '127.0.0.2:3306',
-        ),
-    ),
+
 );

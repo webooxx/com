@@ -15,8 +15,8 @@
         //M('user')->debug(1)->data( $data )->add();
 
             //M('user')->where('id=3')->del();
-        
-        ddump( M('user') );
+
+         ddump( M('user') );
         
         ddump( M('user')->debug(1)->limit(99)->data()->where('1')->findAll() );
         $this->display();

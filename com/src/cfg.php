@@ -3,9 +3,8 @@ array(
 
         #   入口处理
          
-        'CMDMODE' => false,             #   命令行模式
-        'LOGBASE' => 1,                 #   日志信息的展现级别, 1info 2warring 3error；上线后选3；
-        'REOUTE'  => false,             #   路由处理，可以设置为一个函数。输入值为 $_GET，需要输出一个 array( 'm'=>'' , 'a'=>'' )
+        'COMMAND_MODE'  => false,             #   命令行模式
+        'LOG_SHOW_BASE' => 1,                 #   日志信息的展现级别, 1info 2warring 3error；上线后选3
 
 
         #    数据库设置
@@ -17,9 +16,6 @@ array(
         'DB_PASSWORD' => '',
         'DB_DEFCHART' => 'UTF8',
 
-        #   附加数据库
-        'DBS' => array(),                #  配置后，可以使用 M( TABLE , ENGINE )->db( KEY )->find();
-
         #    模板默认设置
         'TPL_THEME' => '.',              #    模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
         'TPL_ENGINE'=> 'php',            #    默认PHP，如果是 smarty ，则保持引入了 smarty 模块接口，因为会调用 A('smarty')->fetch( $path , $assign )，返回编译后的模板代码
@@ -27,9 +23,9 @@ array(
         'TPL_RIGHT_DELIMITER'=> '}-->' , #    模板变量右分界符
 
         #   自动重设的运行时路径
-        'URL_ROOT'     => '.',           #   index.php  入口URL
-        'URL_PUBLIC'   => '.',           #   Public公共目录URL
-        'URL_RELATIVE' => '.',           #   模板当前位置的URL
+        'TPL_URL_ROOT'     => '.',           #   index.php  入口URL
+        'TPL_URL_PUBLIC'   => '.',           #   Public公共目录URL
+        'TPL_URL_RELATIVE' => '.',           #   模板当前位置的URL
  
 
 
