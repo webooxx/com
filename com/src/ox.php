@@ -1,7 +1,7 @@
 <?php
 /**
- * @name ox 框架核心类
- * @class
+ * @name ox
+ * @class 框架核心类
  * @description 每个请求都由 ox::init() 方法发起
  */
 
@@ -200,9 +200,8 @@ function C( $n ,$v = NULL ){
 #   控制器模块
 require_once('Action.php');
 
-
-
-include_once('CsvModel.php');
-
 #   开发调试函数
 include_once('funcs_debug.php');
+
+#   快捷函数
+include_once('funcs_short.php');

@@ -5,8 +5,8 @@ require_once('Model.php');
  * @description  该模块提供一个Csv通用数据模型类
  */
 /**
- * @name CsvModel Csv通用数据模型类
- * @class
+ * @name CsvModel
+ * @class Csv通用数据模型类
  * @extends Model
  * @description  CsvModel 支持在本地以文本形式读写通用的Csv文件数据，可以免除数据库的需求
  * 约定第一行作为字段信息
@@ -17,13 +17,11 @@ class CsvModel extends Model{
     function connect( $db ){
 
         $path = ox::c('PATH_APP') .'/'. $db['DB_NAME'] ;
-        if( !realpath($path) ){
-            mkdir( $path , 0700);
+        $this->operate['PATH_DB'] = $path;
+        if( !realpath($path) && ! mkdir( $path , 0755) ){
+            ox::l( $this->operate['PATH_DB'].'不存在，且 项目目录不具备写权限!'  ,3, 3);
         }
-        $this->operate['PATH_DB'] = $path . (realpath($path) ? '' : '不存在，且目录不具备写权限!');
-        if( !realpath($path) ){
-            ox::l( $this->operate['PATH_DB']  ,3, 3);
-        }
+        
 
         return 'connected';
     }
@@ -32,20 +30,46 @@ class CsvModel extends Model{
     function table($table){
 
         $path = $this->operate['PATH_DB'] .'/'.$table.'.csv' ;
+        $this->operate['PATH_TABLE'] = $path;
 
-        if( !file_exists($path) ){
-            $this->operate['PATH_TABLE'] = $path.' 文件不存在!';
-            ox::l( $this->operate['PATH_TABLE']  ,3, 3);
-            $this->handle = false;
+        if( !file_exists($path) && !$this->initTable() ){
+            ox::l( $this->operate['PATH_TABLE'].' 不存在，且数据目录不具备写权限!'  ,3, 3);
         }
 
-        
+        $this->setHandle();
+
 
         return $this;
     }
-    function create(){
 
+    /**
+     * 初始化数据表
+     * @return Boolean 如果自定义模型有structure方法，那么会从这个方法的
+     */
+    function initTable(){
+        $path = $this->operate['PATH_TABLE'];
+        if( method_exists($this, 'structure') ){
+            $keys = array_keys( $this->structure() );
+           if( touch($path) ){
+                $this->setHandle();
+                return file_put_contents($path,implode(',', $keys));
+           }
+        }
+        return false;
     }
+
+    /**
+     * 设置数据模型的handle，在打开一个文件前，如果已经有了handle则会先关闭
+     * @param string $mode 可选，打开模式，默认为rw
+     */
+    function setHandle( $mode = "rw"){
+        $file = $this->operate['PATH_TABLE'];
+        if( $this->handle ){
+            fclose($file);
+        }
+        $this->handle = fopen( $file ,$mode);
+    }
+
     function query(){}
 }
 /*

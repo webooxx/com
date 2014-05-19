@@ -5,8 +5,8 @@ require_once('Model.php');
  * @description  该模块提供一个Mysql通用数据模型类l
  */
 /**
- * @name MysqlModel Mysql通用数据模型类
- * @class
+ * @name MysqlModel
+ * @class Mysql通用数据模型类
  * @extends Model
  * @description  
  *  

@@ -22,7 +22,7 @@ array(
         'TPL_LEFT_DELIMITER' => '<!--{', #    模板变量左分界符
         'TPL_RIGHT_DELIMITER'=> '}-->' , #    模板变量右分界符
 
-        #   自动重设的运行时路径
+        #   运行时自动重设的模板关键路径
         'TPL_URL_ROOT'     => '.',           #   index.php  入口URL
         'TPL_URL_PUBLIC'   => '.',           #   Public公共目录URL
         'TPL_URL_RELATIVE' => '.',           #   模板当前位置的URL
@@ -33,6 +33,7 @@ array(
         'DIR_ACT'=> 'act',              #    控制器目录               相对于 /app/ 项目目录
         'DIR_TPL'=> 'tpl',              #    模板目录
         'DIR_MOD'=> 'mod',              #    数据模型目录
+        'DIR_INC'=> 'inc',              #    公共类引用目录
 
 
         #    核心设置，不建议修改

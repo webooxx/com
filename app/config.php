@@ -1,13 +1,23 @@
 <?php 
 
-#   自定义配置
-return array(
+#   不同环境
+if( $_SERVER['host'] == '127.0.0.1'){
+    define('ENV','develop');
+}elseif( $_SERVER['host'] == 'www.baidu.com'){
+    define('ENV','online');
+}else{
+     define('ENV','develop');
+}
 
-    'DB_ENGINE'=> 'Mysql',               #    数据库引擎类型，目前支持 Mysql ， Csv 类型
-    'DB_PREFIX'=> 'lw_',                 #    数据库表前缀
-    'DB_HOST' => '127.0.0.1:3306',
-    'DB_NAME' => 'lifeword',
-    'DB_USERNAME' => 'root',
-    'DB_PASSWORD' => 'root',
+#   不同配置
+$config['develop'] = array(
+        'DB_PREFIX'=> '',               #    数据库表前缀
+        'DB_HOST' => '127.0.0.1:3306',
+        'DB_NAME' => 'test',
+        'DB_USERNAME' => 'root',
+        'DB_PASSWORD' => '',
+    );
+$config['online'] = array(
+    );
 
-);
+return (array)$config[ ENV ];

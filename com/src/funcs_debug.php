@@ -3,3 +3,4 @@ function dump ($arg) { @header("Content-type:text/html"); echo '<pre>'; var_dump
 function ddump($arg) { @header("Content-type:text/html"); echo '<pre>'; var_dump($arg) ; die( '</pre>'); }
 function json ($arg) { @header("Content-type:text/json"); echo json_encode($arg) ; }
 function djson($arg) { @header("Content-type:text/json"); die( json_encode($arg)); }
+function olog( $msg , $level = 1 , $show = 0){ return ox::l($msg,$level,$show); }

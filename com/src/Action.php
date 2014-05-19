@@ -84,19 +84,27 @@ class Action {
         }
         $path_final = realpath( implode('/', $path_info ) );
 
-        ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . rtrim( substr(  ox::c('PATH_APP') , strlen( $_SERVER['DOCUMENT_ROOT'] ) ) ,'/' ).'/'  );
-        ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT')  . implode('/', array(  ox::c('DIR_TPL') ,  ox::c('TPL_THEME') ,'Public/' ) ) );
-        ox::c('TPL_URL_RELATIVE' , trim(dirname( array_pop( explode( ox::c('PATH_APP') , $path_final) )), '/' ) );
+        ox::c('TPL_URL_ROOT'     , str_replace( '/./','/', '//'.$_SERVER['HTTP_HOST'] . rtrim( substr(  ox::c('PATH_APP') , strlen( $_SERVER['DOCUMENT_ROOT'] ) ) ,'/' ).'/'  )) ;
+        ox::c('TPL_URL_PUBLIC'   , str_replace( '/./','/',ox::c('TPL_URL_ROOT')  . implode('/', array(  ox::c('DIR_TPL') ,  ox::c('TPL_THEME') ,'Public/' ) ) ) );
+        ox::c('TPL_URL_RELATIVE' , str_replace( '/./','/',trim(dirname( array_pop( explode( ox::c('PATH_APP') , $path_final) )), '/' ) .'/' ));
 
         if( !$path_final ){
             array_shift($path_info);
             return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
         }
-  
+
         #   如果存在模板文件
         $content = file_get_contents( $path_final );
         #   模板关键字替换
-        $content = str_replace( array('../Public/','../../','./' ),  array(  ox::c('TPL_URL_PUBLIC' ),ox::c('TPL_URL_ROOT' ),ox::c('TPL_URL_RELATIVE' ) ) ,$content  );
+  
+        $content = preg_replace('/(href=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
+        $content = preg_replace('/(src=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
+
+        $content = preg_replace('/(href=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
+        $content = preg_replace('/(src=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_RELATIVE' )."$3 $4",$content );
+
+        $content = preg_replace('/(href=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_ROOT' )."$3 $4",$content );
+        $content = preg_replace('/(src=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_ROOT' )."$3 $4",$content );
 
         #   处理引用，引用文件不存在时，由PHP的include默认错误进行处理
         $content = preg_replace_callback('/'.ox::c('TPL_LEFT_DELIMITER').'\s?include\s+([^}]*)\s?'.ox::c('TPL_RIGHT_DELIMITER').'/', array('self','_fetch_inc_callback'), $content );
@@ -191,7 +199,7 @@ class Action {
  * A('tools')->args();
  */
 function A( $m = '' ){ 
-    $route = ox::route( array('m'=>$m) );
+    $route = ox::r( array('m'=>$m) );
     ox::l( '调用模块: '.$route['m'] );
     return ox::m( $route );
 }

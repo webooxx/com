@@ -22,7 +22,7 @@ class toolsAction extends Action{
         foreach($dirs as $d) {
             if ($d == '.' || $d == '..') {}
             else{
-                $real = J($path,$d);
+                $real = $path.'/'.$d;
                 if(is_null($match)){  $result[] = $real ;}else{$this->match( $match,$real) && $result[]= $real ;}
                 if(is_dir($real) && $rec )  {  $result = $result + $this -> scand( $real,$match, $result,$rec ); }
             }
@@ -197,8 +197,25 @@ class toolsAction extends Action{
 		
 	}
 
+    function cacheTmp( $name , $value = null ){
+
+        $name = md5( $name );
+        $realpath = sys_get_temp_dir() .'/'.$name;
+
+        if( !is_null($value) ){
+            return file_put_contents( $realpath, $value );
+        }
+        if( realpath( $realpath ) ){
+            $content = file_get_contents( $realpath );
+            unlink($realpath);
+            return $content;
+        }
+        return false;
+
+    }
+
 	#    美化文件大小
-	function fbytes($a_bytes) {
+	function format_bytes($a_bytes) {
 		if ($a_bytes < 1024) {
 			return $a_bytes .' B';
 		} elseif ($a_bytes < 1048576) {
