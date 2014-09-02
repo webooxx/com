@@ -169,7 +169,7 @@ class Model{
                 $sql[] = 'SET';
                 $sql[] = implode(',', $kvs);
                 $sql[] = 'WHERE '.$this->operate['where'];
-                $sql[] = empty( $this->operate['limit'] ) ? ' LIMIT 1 ' : 'LIMIT ' .$this->operate['limit'];
+                $sql[] = empty( $this->operate['limit'] ) ? ' ' : 'LIMIT ' .$this->operate['limit'];
                 return $this->query( implode(' ',$sql) );
                 break;
 
