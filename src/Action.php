@@ -103,14 +103,14 @@ class Action {
         $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
         $_uri   = dirname($_SERVER[SCRIPT_NAME]).'/';     # '/doll/'
 
-        $_dir_tpl_theme = str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/');
+        $_dir_tpl_theme = ltrim(str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'),'./');
 
         $_dir_public   = $_dir_tpl_theme.'/Public/';
         $_dir_relative = $_dir_tpl_theme.$path_info[3].'/';
 
         ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . $_uri )  ;
-        ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .$_dir_public.'/') ;
-        ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .$_dir_relative);
+        ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
+        ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_relative));
 
         if( !$path_final ){
             array_shift($path_info);
