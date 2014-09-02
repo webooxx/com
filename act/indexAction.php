@@ -16,4 +16,6 @@ class indexAction extends Action{
         $this->display('install.html',array('step'=>(int)$_GET['step'] ));
     }
 
+
+
 }
