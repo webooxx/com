@@ -6,3 +6,4 @@ rm -rf /tmp/com/.git
 cd ..
 rm -rf com
 mv /tmp/com ./
+cd ..
