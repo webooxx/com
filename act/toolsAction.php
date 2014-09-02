@@ -5,6 +5,26 @@ class toolsAction extends Action{
 	//function __construct(){C('SYS_VERIFY_FUNC','rbac:reject');}
 
 
+    function objstr2table( $arr ){
+        $arr = unserialize(   trim($arr) );
+        if(!$arr){
+            return '';
+        }
+        foreach ($arr as $key => $value) {
+            $thead[] = "<th>$key</th>";
+            $tbody[] = "<td>$value</td>";
+        }
+        $html[] = '<table  border="0" cellspacing="0" cellpadding="0" class="table">';
+        $html[] =   '<thead>';
+        $html[] = implode('', $thead);
+        $html[] =    '</thead>';
+        $html[] =    '<tbody>';
+        $html[] = implode('', $tbody);
+        $html[] =    '</tbody>';
+        $html[] = '</table>';
+        return implode('', $html);
+    }
+
     function shorturl($input) {
       $base32 = array (
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
