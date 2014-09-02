@@ -47,7 +47,11 @@ class MysqlModel extends Model{
      * @description 即使查询返回了一个空数据也会返回一个数组，每次执行都会清空操作栈
      */
     function query( $sql ){
-        $this->operate = array();
+        if(  $this->operate['debug'] == 1 ){
+            dump($sql);
+            ddump($this);
+        }
+        $this->operate = array('table'=>$this->operate['table']);
         #    每次查询过后清理查询参数条件
         $sql = trim($sql);
         $resource = @mysql_query( $sql, $this->handle );

@@ -6,13 +6,14 @@
 class indexAction extends Action{
 
     function __construct(){
-
+        $this->assign('title','ox install');
     }
 
     function index(){
-        echo '默认首页';
+        $this->display();
     }
-
-
+    function install(){
+        $this->display('install.html',array('step'=>(int)$_GET['step'] ));
+    }
 
 }

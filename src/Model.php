@@ -46,8 +46,9 @@ class Model{
         $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';
         #   是否已缓存
         $cache_name = $table;
-        if( Model::$instances[$cache_name] ){
-            return Model::$instances[$cache_name];
+        if( $ins = Model::$instances[$cache_name] ){
+            $ins->table( $table );
+            return $ins;
         }
         #   检测自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
@@ -203,6 +204,17 @@ class Model{
                 $sql[] = $this->operate['having'] ? 'HAVING '  .$this->operate['having'] : '';
                 return $this->query( implode(' ',$sql) );
                 break;
+            case 'count' :
+
+                if( $arg ){ $this->where($arg); }
+                $sql[] = 'SELECT';
+                $sql[] = ' count(*) as c ';
+                $sql[] = 'FROM';
+                $sql[] = $this->operate['table'];
+                $sql[] = $this->operate['where']  ? 'WHERE '   .$this->operate['where'] : '';
+                $result = $this->query( implode(' ',$sql) );
+                return $result[0]['c'];
+                break;
             /**
              * @name Model->table 设置操作栈的table
              * @function
@@ -234,9 +246,9 @@ class Model{
                     $this->operate[$act] = $arg;
                 }else if( is_array($arg) ) {
                     foreach ( $arg as $k => $v) {
-                        $kvs[] = '`'.addslashes($k).'` = '. ( is_int( $v ) ?  $v : '\''.addslashes($v).'\'' );
+                        $kvs[] = '`'.trim(addslashes($k)).'` = '. ( is_int( $v ) ?  $v : '\''.addslashes($v).'\'' );
                     }
-                    $this->operate[$act] = implode(' and ',$kvs);
+                    $this->operate[$act] = implode(' and ',(array)$kvs);
                 }
                 break;
             /**
@@ -286,6 +298,7 @@ class Model{
                     $this->operate['limit'] = implode( ',',$limit );
                 }
                 break;
+
             /**
              * @name Model->query 查询操作
              * @function

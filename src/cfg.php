@@ -30,6 +30,7 @@ array(
 
 
         #    项目默认设置，不建议修改
+        'DIR_APP'=> '.'  ,              #    APP目录
         'DIR_ACT'=> 'act',              #    控制器目录               相对于 /app/ 项目目录
         'DIR_TPL'=> 'tpl',              #    模板目录
         'DIR_MOD'=> 'mod',              #    数据模型目录

@@ -93,7 +93,7 @@ class ox {
                 $act_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_ACT').'/'.$act );
                 $act_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_ACT').'/'.$act );
                 $act = $act_app ? $act_app : $act_com;
-                if( $act_com ){
+                if( !$act_app && $act_com ){
                     $s = ox::c('PATH_COM');
                 }
 
@@ -112,8 +112,8 @@ class ox {
         }
         ox::l( '运行 ' .$m.'Action -> '.$a , 1 );
         ox::$m[$m]->Module_Name = $m;
-        ox::$m[$m]->Module_From = $s;
         ox::$m[$m]->Method_Name = $a;
+        ox::$m[$m]->Module_From = $s;
         return ox::$m[$m];
     }
     /**
@@ -170,7 +170,10 @@ class ox {
 
         #   路径
         ox::c('PATH_APP',PATH_APP);
-        ox::c('PATH_COM',PATH_COM );
+        ox::c('PATH_COM',PATH_COM);
+        if(defined('DIR_APP')){
+            ox::c('DIR_APP',DIR_APP);
+        }
 
         #   分析请求对象
         $req = ox::r( $_GET );
@@ -199,6 +202,9 @@ function C( $n ,$v = NULL ){
 
 #   控制器模块
 require_once('Action.php');
+
+#   MySql 数据库模型
+require_once('MysqlModel.php');
 
 #   开发调试函数
 include_once('funcs_debug.php');

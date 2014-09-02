@@ -21,7 +21,9 @@ class Action {
     public $Module_From    = '.';
     public $Module_Name    = '.';
     public $Method_Name    = '.';
-    public $Tpl_Variables    = array();
+
+    public $Tpl_Variables  = array();
+    public $Layout_Name    = false;
 
     /**
      * @name Action->display 模板展现方法
@@ -41,6 +43,19 @@ class Action {
         }
         @header("Content-type:text/html");
         die( $this->fetch( $name) );
+    }
+
+    function _action_layout( $name = array() ){
+        $this->Layout_Name = $name[0];
+    }
+    function _action_layout_release( $content ){
+        $name = $this->Layout_Name; 
+        $this->Layout_Name = false;
+
+        $this->assign('content',$content);
+        $content = $this->fetch( $name );
+
+        return $content;
     }
     /**
      * @name Action->fetch 模板编译方法
@@ -84,9 +99,18 @@ class Action {
         }
         $path_final = realpath( implode('/', $path_info ) );
 
-        ox::c('TPL_URL_ROOT'     , str_replace( '/./','/', '//'.$_SERVER['HTTP_HOST'] . rtrim( substr(  ox::c('PATH_APP') , strlen( $_SERVER['DOCUMENT_ROOT'] ) ) ,'/' ).'/'  )) ;
-        ox::c('TPL_URL_PUBLIC'   , str_replace( '/./','/',ox::c('TPL_URL_ROOT')  . implode('/', array(  ox::c('DIR_TPL') ,  ox::c('TPL_THEME') ,'Public/' ) ) ) );
-        ox::c('TPL_URL_RELATIVE' , str_replace( '/./','/',trim(dirname( array_pop( explode( ox::c('PATH_APP') , $path_final) )), '/' ) .'/' ));
+
+        $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
+        $_uri   = dirname($_SERVER[SCRIPT_NAME]).'/';     # '/doll/'
+
+        $_dir_tpl_theme = str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/');
+
+        $_dir_public   = $_dir_tpl_theme.'/Public/';
+        $_dir_relative = $_dir_tpl_theme.$path_info[3].'/';
+
+        ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . $_uri )  ;
+        ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .$_dir_public.'/') ;
+        ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .$_dir_relative);
 
         if( !$path_final ){
             array_shift($path_info);
@@ -95,12 +119,12 @@ class Action {
 
         #   如果存在模板文件
         $content = file_get_contents( $path_final );
+
         #   模板关键字替换
-  
         $content = preg_replace('/(href=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
         $content = preg_replace('/(src=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
 
-        $content = preg_replace('/(href=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
+        $content = preg_replace('/(href=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_RELATIVE' )."$3 $4",$content );
         $content = preg_replace('/(src=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_RELATIVE' )."$3 $4",$content );
 
         $content = preg_replace('/(href=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_ROOT' )."$3 $4",$content );
@@ -111,24 +135,37 @@ class Action {
 
         $content = preg_replace('/('.ox::c('TPL_LEFT_DELIMITER').')\s*\$(.*?);?\s*('.ox::c('TPL_RIGHT_DELIMITER').')/','<?php echo \$$2; ?>',$content);
         $content = preg_replace('/('.ox::c('TPL_LEFT_DELIMITER').')\s*(.*?);?\s*('.ox::c('TPL_RIGHT_DELIMITER').'){1}/','<?php $2; ?>',$content);
+        
 
         #   模板变量释放
         if( !$isInc ){
            
             $tmpfname = tempnam(sys_get_temp_dir(),"oxTpl_");
             $handle = fopen($tmpfname, "w");
+
+
             fwrite($handle, $content);
             fclose($handle);
-
                 if( ox::c('TPL_ENGINE') == 'php' ){
+                    
+                    $content = '';
                     extract($this->Tpl_Variables );
-                    $content = include( $tmpfname );
+
+                    ob_start();
+                        $content = include( $tmpfname );
+                        $content = ob_get_contents();
+                        if( $this->Layout_Name ){
+                            $content = $this->_action_layout_release($content);
+                        }
+                    ob_end_clean();
+                    
                 }else{
                     $content = A( ox::c('TPL_ENGINE') )->fetch( $tmpfname , $this->Tpl_Variables );
                 }
 
             unlink($tmpfname);  
         }
+
         return $content;
     }
 
@@ -185,7 +222,7 @@ class Action {
         if( $template ){
             return $this->display();
         }else{
-            ox::l( '模块和模板都不存在!' , 3 , 3 ) ;
+            ox::l( '模块方法和模板都不存在!' , 3 , 3 ) ;
         }
     }
 }
