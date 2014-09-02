@@ -10,6 +10,7 @@
  *  require、include 作为代码运行时引入的内容
  */
 error_reporting(0);
+session_start();
 $mvc_src = realpath( dirname ( __FILE__ ).'/src/ox.php'  );
 $mvc_min = realpath( dirname ( __FILE__ ).'/mvc.min.php' );
 

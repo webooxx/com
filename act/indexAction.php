@@ -6,7 +6,7 @@
 class indexAction extends Action{
 
     function __construct(){
-        $this->assign('title','ox install');
+        $this->assign('title','ox 框架应用程序创建');
     }
 
     function index(){
