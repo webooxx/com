@@ -7,3 +7,4 @@ cd ..
 rm -rf com
 mv /tmp/com ./
 cd ..
+pwd
