@@ -106,7 +106,7 @@ class Action {
         $_dir_tpl_theme = ltrim(str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'),'./');
 
         $_dir_public   = $_dir_tpl_theme.'/Public/';
-        $_dir_relative = $_dir_tpl_theme.$path_info[3].'/';
+        $_dir_relative = $_dir_tpl_theme.$path_info[2].'/'.$path_info[3].'/';
 
         ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . $_uri )  ;
         ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
