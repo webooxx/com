@@ -1,4 +1,4 @@
-<?php
+<?php # 模型基类
 /**
  * @file 数据模型支持
  * @description  该模块提供一个数据模型基类 Model ，同时提供一个快捷方法 M( $modelName ) ，并且是 Mysql、Csv 数据模型的基类
@@ -52,8 +52,8 @@ class Model{
         }
         #   检测自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod = $mod_app ? $mod_app : $mod_com ;
+        $mod_pub = realpath( ox::c('PATH_PUB').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
+        $mod = $mod_app ? $mod_app : $mod_pub ;
         
         $ins = $mod;
 

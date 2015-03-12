@@ -1,4 +1,4 @@
-<?php
+<?php # 控制器基类
 /**
  * @name Action 控制器基类
  * @class
@@ -97,8 +97,18 @@ class Action {
                 break;
             }
         }
-        $path_final = realpath( implode('/', $path_info ) );
 
+        #   会尝试在共享目录中寻找模板文件
+        $path_final = realpath( implode('/', $path_info ) );
+        $path_info[0] = ox::c('PATH_PUB');
+        $path_final_pub = realpath( implode('/', $path_info ) );
+
+        $path_final = $path_final ? $path_final :$path_final_pub;
+
+        if( !$path_final ){
+            array_shift($path_info);
+            return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
+        }
 
         $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
         $_uri   = dirname($_SERVER[SCRIPT_NAME]).'/';     # '/doll/'
@@ -112,10 +122,6 @@ class Action {
         ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
         ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_relative));
 
-        if( !$path_final ){
-            array_shift($path_info);
-            return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
-        }
 
         #   如果存在模板文件
         $content = file_get_contents( $path_final );

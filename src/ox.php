@@ -22,7 +22,7 @@ class ox {
      * @property {Array}
      */
     static $l = array();  #   日志
-    
+
     /**
      * @name ox::c 配置信息存取管理
      * @function
@@ -91,10 +91,10 @@ class ox {
                 #   模块文件
                 $act = $class.'.php';
                 $act_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_ACT').'/'.$act );
-                $act_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_ACT').'/'.$act );
-                $act = $act_app ? $act_app : $act_com;
-                if( !$act_app && $act_com ){
-                    $s = ox::c('PATH_COM');
+                $act_pub = realpath( ox::c('PATH_PUB').'/'.ox::c('DIR_ACT').'/'.$act );
+                $act = $act_app ? $act_app : $act_pub;
+                if( !$act_app && $act_pub ){
+                    $s = ox::c('PATH_PUB');
                 }
 
                 #   仍然没有模块文件，对应用目录下的模板目录进行侦测
@@ -156,6 +156,7 @@ class ox {
         @date_default_timezone_set("PRC");
         ox::$c = require_once('cfg.php');
 
+        ox::c('PATH_PUB',PATH_COM);
         #    命令行模式 将参数完全复制到 $_GET 对象中
         if( count($argv) > 1 ){
             $al = count($argv); ox::$c['COMMAND_MODE'] = true;
@@ -203,8 +204,11 @@ function C( $n ,$v = NULL ){
 #   控制器模块
 require_once('Action.php');
 
+#
+include_once('CsvModel.php');
+
 #   MySql 数据库模型
-require_once('MysqlModel.php');
+include_once('MysqlModel.php');
 
 #   开发调试函数
 include_once('funcs_debug.php');

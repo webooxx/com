@@ -1,5 +1,6 @@
-<?php
+<?php # Mysql类
 require_once('Model.php');
+
 /**
  * @file Mysql通用数据模型支持
  * @description  该模块提供一个Mysql通用数据模型类l

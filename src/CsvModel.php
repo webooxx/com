@@ -1,4 +1,4 @@
-<?php
+<?php   # CSV模型
 require_once('Model.php');
 /**
  * @file Csv通用数据模型支持
