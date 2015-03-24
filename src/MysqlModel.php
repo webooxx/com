@@ -70,4 +70,8 @@ class MysqlModel extends Model{
         }
         return $resource;
     }
+    
+    function lastId(){
+        return mysql_insert_id($this->handle);
+    }
 }
