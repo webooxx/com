@@ -26,6 +26,15 @@ class Action {
     public $Layout_Name    = false;
 
     /**
+     * @name Action->redirect 控制器辅助跳转
+     * @function
+     * @option $url 需要跳转到的目标地址
+     */
+    function _action_redirect( $url ){
+        return header("location:".$url[0]."");
+    }
+
+    /**
      * @name Action->display 模板展现方法
      * @function
      * @option $name {String} 模板名称，模板参数允许【 null 】【 Method.html 】【 Module/Method.html 】【  THEME/Module/Method.html  】
@@ -106,7 +115,9 @@ class Action {
         $path_final = $path_final ? $path_final :$path_final_pub;
 
         if( !$path_final ){
-            array_shift($path_info);
+            if(ENV == 'online'){
+                array_shift($path_info);
+            }
             return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
         }
 
