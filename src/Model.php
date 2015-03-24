@@ -65,8 +65,11 @@ class Model{
             #   通用模型
             $ins = new $engine;
         }
-        $ins->handle = $ins->connect( $ins->db() );
-        $ins->table( $table );
+        if(method_exists($ins,'connect')){
+            $ins->handle = $ins->connect( $ins->db() );
+            $ins->table( $table );
+        }
+
         Model::$instances[$cache_name] = $ins;
         return $ins;
     }
