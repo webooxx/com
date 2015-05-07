@@ -1,4 +1,4 @@
-<?php
+<?php # 控制器基类
 /**
  * @name Action 控制器基类
  * @class
@@ -24,6 +24,15 @@ class Action {
 
     public $Tpl_Variables  = array();
     public $Layout_Name    = false;
+
+    /**
+     * @name Action->redirect 控制器辅助跳转
+     * @function
+     * @option $url 需要跳转到的目标地址
+     */
+    function _action_redirect( $url ){
+        return header("location:".$url[0]."");
+    }
 
     /**
      * @name Action->display 模板展现方法
@@ -77,7 +86,7 @@ class Action {
         $path_info = array( ox::c('PATH_APP') , ox::c('DIR_TPL') , ox::c('TPL_THEME') , '3::MODULE' , '4::METHOD.html/Filename'  );
 
         $path_info[3] = $this->Module_Name;
-        $path_info[4] = $this->Method_Name . '.html';
+        $path_info[4] = $this->Method_Name . ox::c('DEF_TPL_EXT');
 
         if( !is_null($name) ){
 
@@ -97,8 +106,20 @@ class Action {
                 break;
             }
         }
-        $path_final = realpath( implode('/', $path_info ) );
 
+        #   会尝试在共享目录中寻找模板文件
+        $path_final = realpath( implode('/', $path_info ) );
+        $path_info[0] = ox::c('PATH_PUB');
+        $path_final_pub = realpath( implode('/', $path_info ) );
+
+        $path_final = $path_final ? $path_final :$path_final_pub;
+
+        if( !$path_final ){
+            if(ENV == 'online'){
+                array_shift($path_info);
+            }
+            return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
+        }
 
         $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
         $_uri   = dirname($_SERVER[SCRIPT_NAME]).'/';     # '/doll/'
@@ -106,16 +127,12 @@ class Action {
         $_dir_tpl_theme = ltrim(str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'),'./');
 
         $_dir_public   = $_dir_tpl_theme.'/Public/';
-        $_dir_relative = $_dir_tpl_theme.$path_info[3].'/';
+        $_dir_relative = $_dir_tpl_theme.$path_info[2].'/'.$path_info[3].'/';
 
         ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . $_uri )  ;
         ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
         ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_relative));
 
-        if( !$path_final ){
-            array_shift($path_info);
-            return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
-        }
 
         #   如果存在模板文件
         $content = file_get_contents( $path_final );
@@ -216,7 +233,7 @@ class Action {
             }
         }
         #   尝试展现模板
-        $template = realpath( $this->Module_From.'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m.'/'.$a.'.html' );
+        $template = realpath( $this->Module_From.'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m.'/'.$a.ox::c('DEF_TPL_EXT') );
 
         ox::l('尝试展现模板 '.$template ,1 );
         if( $template ){
