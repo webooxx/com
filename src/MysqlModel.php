@@ -1,5 +1,6 @@
-<?php
+<?php # Mysql类
 require_once('Model.php');
+
 /**
  * @file Mysql通用数据模型支持
  * @description  该模块提供一个Mysql通用数据模型类l
@@ -48,8 +49,7 @@ class MysqlModel extends Model{
      */
     function query( $sql ){
         if(  $this->operate['debug'] == 1 ){
-            dump($sql);
-            ddump($this);
+            ddump($sql);
         }
         $this->operate = array('table'=>$this->operate['table']);
         #    每次查询过后清理查询参数条件
@@ -57,16 +57,70 @@ class MysqlModel extends Model{
         $resource = @mysql_query( $sql, $this->handle );
         if(!$resource){
             ox::l(mysql_error(),3);
-            if(  $this->operate['debug'] == 1 ){
-                ox::l('MYSQL查询错误!',3,3);
-            }else{
-                die('MYSQL查询错误!');
-            }
+            ox::l('MYSQL查询错误!!',98,99);
         }
         if( is_resource( $resource ) ){
             while( $row = mysql_fetch_assoc( $resource )) { $result[] = $row; }
             return (array)$result;
         }
         return $resource;
+    }
+    
+    function lastId(){
+        return mysql_insert_id($this->handle);
+    }
+
+    /**
+     * justify whether table exists in database.
+     * created by xiazhiqiang, 2015-04-21
+     * @param string $tableName : table name
+     * @param string $dbName : database name
+     * @return boolean
+     */
+    public function isTableExists($tableName = '', $dbName = '')
+    {
+        try {
+            if (!$tableName || !$dbName) {
+                return false;
+            }
+
+            $sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+                    WHERE TABLE_SCHEMA = '{$dbName}' AND TABLE_NAME = '{$tableName}';";
+            $result = $this->query($sql);
+
+            if (empty($result)) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * drop table
+     * created by xiazhiqiang, 2015-04-21
+     * @param string $tableName : table name
+     * @return boolean
+     */
+    public function dropTable($tableName = '')
+    {
+        try {
+            if (!$tableName) {
+                return false;
+            }
+
+            $sql = "DROP TABLE IF EXISTS `{$tableName}`;";
+            $result = $this->query($sql);
+
+            if ($result) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception $e) {
+            return false;
+        }
     }
 }
