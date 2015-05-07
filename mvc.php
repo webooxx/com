@@ -12,6 +12,7 @@
 // error_reporting(0);
 error_reporting(E_ALL & ~(E_STRICT | E_NOTICE));
 
+
 $mvc_src = realpath( dirname ( __FILE__ ).'/src/ox.php'  );
 $mvc_min = realpath( dirname ( __FILE__ ).'/mvc.min.php' );
 
