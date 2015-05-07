@@ -43,9 +43,11 @@ array(
         'DEF_REQ_KEY_ACT'=> 'a',        #    从 $_GET['a'] 中取得模块类需要运行的方法
         'DEF_MOD'=> 'index',            #    默认请求的模块类
         'DEF_ACT'=> 'index',            #    默认执行的模块方法
-        'DEC_ACT_EXT'=> 'Action',       #    默认模块类名后缀，例： indexAction.php
+        'DEF_ACT_EXT'=> 'Action',       #    默认模块类名后缀，例： indexAction.php
+        'DEF_TPL_EXT'=> '.html',        #    默认模板的后缀，例： index.html
 
         #   自动重设路径，只读
         'PATH_APP'=> '.',               #    框架运行时自动设置
         'PATH_COM'=> '.',               #    项目入口文件绝对路径、项目组件路径
+        'PATH_PUB'=> '.',               #    公共的 INC，ACT，MOD 目录
     );
