@@ -1,4 +1,4 @@
-<?php
+<?php # 模型基类
 /**
  * @file 数据模型支持
  * @description  该模块提供一个数据模型基类 Model ，同时提供一个快捷方法 M( $modelName ) ，并且是 Mysql、Csv 数据模型的基类
@@ -52,8 +52,8 @@ class Model{
         }
         #   检测自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod_com = realpath( ox::c('PATH_COM').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod = $mod_app ? $mod_app : $mod_com ;
+        $mod_pub = realpath( ox::c('PATH_PUB').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
+        $mod = $mod_app ? $mod_app : $mod_pub ;
         
         $ins = $mod;
 
@@ -65,8 +65,11 @@ class Model{
             #   通用模型
             $ins = new $engine;
         }
-        $ins->handle = $ins->connect( $ins->db() );
-        $ins->table( $table );
+        if(method_exists($ins,'connect')){
+            $ins->handle = $ins->connect( $ins->db() );
+            $ins->table( $table );
+        }
+
         Model::$instances[$cache_name] = $ins;
         return $ins;
     }
@@ -152,7 +155,7 @@ class Model{
             /**
              * @name Model->save 构建更新数据的SQL，并且执行
              * @function
-             * @option $args {Array} 可选，可选，可以传入一个有键值对的数组作为更新的数据
+             * @option $args {Array} 可选，可选，可以传入一个有键值对的数组作为更新的数据，也可以传入一个字符串，其中允许带有一个字段相关的运算符
              * @description 参数中没有提到字段的数据不会被修改。如果没有传入参数作为更新条件，并且也没有where设置，那么更新语句将不会执行，并且抛出一个错误日志
              */
             case 'save':            #   改
@@ -163,7 +166,14 @@ class Model{
                     }
                     return false;
                 }
-                foreach ($this->operate['data'] as $k => $v) {  $kvs[] = '`'.$k.'` = \''.$v.'\''; }
+                foreach ($this->operate['data'] as $k => $v) {
+
+                    if( substr($v,0,1) === substr($v,-1) &&  substr($v,-1) === '`' ){
+                        $kvs[] = '`'.$k.'` = '.substr($v,1,-1) ;
+                    }else{
+                        $kvs[] = '`'.$k.'` = '.(is_string($v) ? '\'' . $v .'\'' : $v);
+                    }
+                }
                 $sql[] = 'UPDATE';
                 $sql[] = $this->operate['table'];
                 $sql[] = 'SET';
@@ -181,18 +191,18 @@ class Model{
              * @description 查询条目数量为一时，返回这条记录本身，多条记录则返回，这些记录组成的数组
              */
             case 'find':            #   查
-                $result = $this->findAll( $arg ? $arg : 1 );
+                $result = $this->findAll( $arg ? $arg : array() );
                 return ( count($result) == 1 ) ? $result[0] :$result ;
                 break;
             /**
              * @name Model->findAll 构建多条查询数据的SQL，并且执行
              * @function
-             * @option $args {Int} 可选，可以传入需要查询的记录的条目数量
+             * @option $args {Int} 可选，可以传入查询条件
              * @return {Array} 记录集合
              * @description 如果$args为空，则返回所有满足条件的记录
              */
             case 'findAll':
-                if( $arg ){ $this->limit($arg); }
+                if( $arg ){ $this->where($arg); }
                 $sql[] = 'SELECT';
                 $sql[] = empty($this->operate['field']) ? '*' : $this->operate['field'] ;
                 $sql[] = 'FROM';
@@ -242,7 +252,10 @@ class Model{
              * @description 没有设置where那么在更新和删除记录的时候会受到限制
              */
             case 'where':
-                if( is_string($arg) ){
+                if($arg === 1 || $arg === true){
+                    $this->operate[$act] = '1=1';
+                }
+                else if( is_string($arg) ){
                     $this->operate[$act] = $arg;
                 }else if( is_array($arg) ) {
                     foreach ( $arg as $k => $v) {
@@ -259,12 +272,19 @@ class Model{
              * @description 参数必须是有键值对的数组；参数的key和value会被 addslashes
              */
             case 'data':
-                if( array_keys( $arg  ) !== range(0, count( $arg  ) - 1) ){
+                if( is_string($arg) ){
+                    $arg = explode(',',trim($arg));
+                    foreach( $arg as $k => $v){
+                        $one =  explode('=',trim($v));
+                        $data[ trim($one[0]) ] = trim($one[1]);
+                    }
+
+                } else  if( array_keys( $arg  ) !== range(0, count( $arg  ) - 1) ){
                     foreach( $arg as $k => $v ){
                         $data[addslashes($k)]= is_string($v) ? addslashes($v) : $v;
                     }
-                    $arg = $data;
                 }
+                $arg = $data;
                 $this->operate[$act] = $arg;
                 break;
             /**
