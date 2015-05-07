@@ -1,4 +1,4 @@
-<?php #    快捷函数
+<?php # 快捷函数
 
 /**
  * 路径合并函数
@@ -16,8 +16,8 @@ function J(){
  * @return mixed
  */
 function I( $n=Null ){
-     $p1 = C('PATH_APP').'/'. C('DIR_INC').'/'.$n.'.class.php'  ;
-     $p2 = C('PATH_COM').'/'. C('DIR_INC').'/'.$n.'.class.php'  ;
+     $p1 = C('PATH_APP').'/'. C('DIR_INC').'/'.$n  ;
+     $p2 = C('PATH_PUB').'/'. C('DIR_INC').'/'.$n  ;
      if( realpath(  $p1 ) ){ return include_once( $p1 ); }
      if( realpath(  $p2 ) ){ return include_once( $p2 ); }
      echo 'Class '.$n.' is non-existent! in '.$p1;
