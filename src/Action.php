@@ -39,7 +39,7 @@ class Action {
      * @function
      * @option $name {String} 模板名称，模板参数允许【 null 】【 Method.html 】【 Module/Method.html 】【  THEME/Module/Method.html  】
      * @option $data {Array}  模板变量，是一个键值对的数组
-     * @description 执行这个方法后，页面会直接die出编译后的模板文件信息
+     * @description 执行这个方法后，页面会直接 echo 出编译后的模板文件信息
      */
     function _action_display( $args = array() ){
 
@@ -51,7 +51,7 @@ class Action {
             }
         }
         @header("Content-type:text/html");
-        die( $this->fetch( $name) );
+        echo $this->fetch( $name);
     }
 
     function _action_layout( $name = array() ){
@@ -67,11 +67,11 @@ class Action {
         return $content;
     }
     /**
-     * @name Action->fetch 模板编译方法
-     * @function
-     * @option $name {String} 模板名称
-     * @return {String} 返回模板编译后的字符串
-     * @description 
+     * 模板编译方法
+     * @param array $args   模板参数
+     * @param bool $isInc   是否是引用模式，第一次进入，在最外层非引用，其他情况下是引用模式
+     * @return mixed|string
+     * @description
      * - 模板编译时会自动替换模板中的关键字，array('../Public/','../../','./' ) 替换为 TPL_URL_PUBLIC 、TPL_URL_ROOT、TPL_URL_RELATIVE
      * - 模板编译时会自动处理模板中的 include 关键字(注意需要有模板界符以及不要循环引用)
      * - 模板变量设置可以参考 @see Action->display 中设置，也可以参考 @ses Action->assign
@@ -109,8 +109,10 @@ class Action {
 
         #   会尝试在共享目录中寻找模板文件
         $path_final = realpath( implode('/', $path_info ) );
-        $path_info[0] = ox::c('PATH_PUB');
-        $path_final_pub = realpath( implode('/', $path_info ) );
+
+        $path_info[0] = '';
+        $path_final_pub = ox::p(  '/'.implode('/', $path_info ) );
+
 
         $path_final = $path_final ? $path_final :$path_final_pub;
 
@@ -122,14 +124,14 @@ class Action {
         }
 
         $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
-        $_uri   = substr(PATH_APP,strlen($_root));        #  dirname($_SERVER[SCRIPT_NAME]).'/'
+        $_uri   = str_replace('\\','/',substr(PATH_APP,strlen($_root)));        #  dirname($_SERVER[SCRIPT_NAME]).'/'
 
         $_dir_tpl_theme = ltrim(str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'),'./');
 
         $_dir_public   = $_dir_tpl_theme.'/Public/';
         $_dir_relative = $_dir_tpl_theme.$path_info[2].'/'.$path_info[3].'/';
 
-        ox::c('TPL_URL_ROOT'     , '//'.$_SERVER['HTTP_HOST'] . rtrim($_uri,'/').'/' )  ;
+        ox::c('TPL_URL_ROOT'     , rtrim( ('//'.$_SERVER['HTTP_HOST']), '/' ) . '/' . rtrim($_uri,'/').'/' )  ;
         ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
         ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_relative));
 
@@ -157,8 +159,8 @@ class Action {
         #   模板变量释放
         if( !$isInc ){
            
-            $tmpfname = tempnam(sys_get_temp_dir(),"oxTpl_");
-            $handle = fopen($tmpfname, "w");
+            $tmp_name = tempnam(sys_get_temp_dir(),"oxTpl_");
+            $handle = fopen($tmp_name, "w");
 
 
             fwrite($handle, $content);
@@ -169,7 +171,7 @@ class Action {
                     extract($this->Tpl_Variables );
 
                     ob_start();
-                        $content = include( $tmpfname );
+                        $content = include( $tmp_name );
                         $content = ob_get_contents();
                         if( $this->Layout_Name ){
                             $content = $this->_action_layout_release($content);
@@ -177,21 +179,18 @@ class Action {
                     ob_end_clean();
                     
                 }else{
-                    $content = A( ox::c('TPL_ENGINE') )->fetch( $tmpfname , $this->Tpl_Variables );
+                    $content = A( ox::c('TPL_ENGINE') )->fetch( $tmp_name , $this->Tpl_Variables );
                 }
 
-            unlink($tmpfname);  
+            unlink($tmp_name);
         }
 
         return $content;
     }
-
     /**
-     * @name Action->assign 模板变量赋值
-     * @function
-     * @param $name  {String} 变量名
-     * @param $value {Any} 变量值
-     * @return {Any} 返回$value
+     * 模板变量赋值
+     * @param array $args 变量名、变量值
+     * @return null
      */
     #   模板赋值
     function _action_assign($args = array()){
@@ -247,13 +246,13 @@ class Action {
  * @name A 控制器模块获取快捷方法
  * @function
  * @short
- * @return {Instace} 返回控制器实例
+ * @return {Instance} 返回控制器实例
  * @description 详细功能参考 @see ox::m
  * @example 调用其他控制器模块
  * A('tools')->args();
  */
-function A( $m = '' ){ 
-    $route = ox::r( array('m'=>$m) );
+function A( $m = '' ){
+    $route = ox::r( array(ox::c('DEF_REQ_KEY_MOD')=>$m) );
     ox::l( '调用模块: '.$route['m'] );
     return ox::m( $route );
 }
