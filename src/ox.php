@@ -35,13 +35,14 @@ class ox {
         return $v === NULL ? ox::$c[$n] : ox::$c[$n] = $v;
     }
     /**
-     * @name ox::l 日志记录展现方法
-     * @function
-     * @param  $msg {Any} 日志信息，包括不限于基本数据类型
-     * @option $level {Int}  日志记录时的级别，一般来说 info 为1 , warring 为2 , error 为3
-     * @option $show  {Int}  默认为0，如果大于 0 ，那么会立刻展现 该级别以下，C('LOG_SHOWBASE') 级(含)以上的日志信息
-     * @return {Boolean} True
-     * @description 如果配置中没有 LOG_SHOWBASE ,那么默认为0；在上线之后，可以把 LOG_SHOWBASE 设置为 3，只显示错误级别的信息
+     * 框架日志中心
+     * @param string    $msg        日志信息，包括不限于基本数据类型
+     * @param int       $level      日志等级
+     * @param  bool       $isDeath    框架在严重错误时传入此项，可以停止运行
+     * @return bool
+     * @description
+     * 配置 LOG_SHOW_BASE 默认为 1 ；在上线之后，可以把 LOG_SHOW_BASE 设置为 3，只显示 >=3 (错误级)的信息
+     * 参数 $outLeastLevel 的作用，如果只希望显示当前这条日志信息，可以 ox::l( $msg , 99 , 99) ，那么显示的日志  $log >= 3 <= 99
      * 目前的展现方法只使用了 json_encode ，还没有使用日志模块进行输出
      */
     #   日志管理
@@ -63,6 +64,20 @@ class ox {
         }
         return true;
     }
+
+    public static function p($append){
+        $paths = explode( ',', ox::c('PATH_PUB'));
+
+        $result = false;
+        foreach ($paths as $value) {
+            $result = realpath( $value.$append );
+            if ($result) {
+                return $result;
+            }
+        }
+
+        return $result;
+    }
     /**
      * @name ox::m 模块调用方法
      * @function
@@ -80,18 +95,21 @@ class ox {
         $class = $m.ox::c('DEF_ACT_EXT');
 
         if( ox::$m[$m] ){
-            ox::l( '模块已缓存!' , 2 );
+            ox::l( $m.'模块已缓存!');
             return ox::$m[$m];
         }else{
+
             if( class_exists( $class ) ){
                 ox::$m[$m] = new $class;
-                ox::l( '模块已经预加载了!', 2 );
+                ox::l( $m.'模块已经预加载了!');
             }else{
 
                 #   模块文件
                 $act = $class.'.php';
+                    ox::l( '准备从APP和PUB的ACT目录下查找模块文件'.$act,1);
                 $act_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_ACT').'/'.$act );
-                $act_pub = realpath( ox::c('PATH_PUB').'/'.ox::c('DIR_ACT').'/'.$act );
+                $act_pub = ox::p('/'.ox::c('DIR_ACT').'/'.$act);
+
                 $act = $act_app ? $act_app : $act_pub;
                 if( !$act_app && $act_pub ){
                     $s = ox::c('PATH_PUB');
@@ -99,11 +117,11 @@ class ox {
 
                 #   仍然没有模块文件，对应用目录下的模板目录进行侦测
                 if(!$act){
-                    ox::l( '模块不存在!', 2 );
+                    ox::l( '控制器模块文件不存在,尝试展现APP和PUB的ACT目录下的模板!');
                     $tpl = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m );
-                    !$tpl ? ox::l( '模板也不存在!' , 3 , 3 ) : ox::$m[$m] = new Action;
+                    !$tpl ? ox::l( '没有找到模板文件，系统无法运行!' , 3 , true ) : ox::$m[$m] = new Action;
                 }else{
-                    ox::l( '模块存在!', 1 );
+                    ox::l( '准备引入控制器模块文件!'.$m, 1 );
                     include_once( $act );
                     ox::$m[$m] = new $class;
                 }
@@ -117,13 +135,10 @@ class ox {
         return ox::$m[$m];
     }
     /**
-     * @name ox::r 路由处理
-     * @function
-     * @param $GET {Array}  默认为浏览器的GET参数
-     * @return {Array} 返回一个解析了浏览器GET参数后的数组，格式为： array( 'm' => '控制器模块' , 'a'=> '方法' )
-     * @description
+     * 路由处理
+     * @param array $GET  一般是一个$_GET对象，其中包含 r、m，（或者根据配置参数不同）分别是 控制器模块名，和方法名
+     * @return array 返回 array( m=> '' , a=> '' )
      */
-    #   路由处理 返回 array( m=> '' , a=> '' )
     static function r( $GET ){
         $req_r = ox::c('DEF_REQ_KEY_RUT');
         $req_a = ox::c('DEF_REQ_KEY_ACT');
@@ -137,16 +152,16 @@ class ox {
             $a = $GET[$req_a];
         }
         return array(
-            'm' => empty($m) || is_numeric( $m) ? ox::c('DEF_MOD') : $m,
-            'a' => empty($a) || is_numeric( $a) ? ox::c('DEF_ACT') : $a,
+            'm' => htmlspecialchars(empty($m) || is_numeric( $m) ? ox::c('DEF_MOD') : $m),
+            'a' => htmlspecialchars(empty($a) || is_numeric( $a) ? ox::c('DEF_ACT') : $a),
         );
     }
     
     /**
      * @name ox::init 框架运行入口
      * @function
-     * @option $cfgs {Array}  运行时配置信息，一个带有若干键值的，如果不传入默认为一个空的数组，
-     * @param  $argv {Array}  入口文件执行init时自带的参数，该参数的作用是在命令行模式下传入对应的参数，
+     * @option array $cfgs   运行时配置信息，一个带有若干键值的，如果不传入默认为一个空的数组，
+     * @param  array $argv   入口文件执行init时自带的参数，该参数的作用是在命令行模式下传入对应的参数，
      * @description  初始化调用时，会根据参数执行对应的控制器模块和方法
      * 在命令行模式下的参数会被全部传入到 $_GET 对象中，命令行运行的格式类似： php index.php r=index/test id=1
      * 参数请参考 @see ox::c
@@ -185,17 +200,11 @@ class ox {
 
 }
 /**
- * @name C 配置信息存取快捷方法
- * @function
- * @short
- * @return {Any} 参数存取的值
- * @description 详细功能参考 @see ox::c
- * 
- * @example 读取模板的主题目录名
- * C('TPL_THEME');
- * 
- * @example 设置模板的主题目录名
- * C('TPL_THEME', $myTheme );
+ * 配置信息存取快捷方法
+ * @param string $n 名
+ * @param null $v   值
+ *  @see ox::c
+ * @return null
  */
 function C( $n ,$v = NULL ){
     return ox::c($n,$v);
