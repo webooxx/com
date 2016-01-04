@@ -4,7 +4,7 @@
  * @description  该模块提供一个数据模型基类 Model ，同时提供一个快捷方法 M( $modelName ) ，并且是 Mysql、Csv 数据模型的基类
  */
 /**
- * @name Modle 数据模型基类
+ * @name Model 数据模型基类
  * @class
  * @description  基本数据模型
  * - 所有自定义的数据模型都不应该直接继承该类，而应该继承 通用数据模型类 ；例如 MysqlModel 或者 CsvModel
@@ -29,14 +29,12 @@ class Model{
 
     public $handle;   #  链接对象
     public $operate;  #  操作栈
-
     /**
-     * @name Model::getInstance 数据模型实例获取
-     * @function
-     * @param  $table {String} 表名
-     * @option $engine {String} 数据库类型，如果不传入，默认使用配置中 DB_ENGINE 指定的类型；对于自定义模型，此参数无意义；自定义数据模型的类型，由其继承的类决定
-     * @return {MoldeInstance} 返回一个自定义模型的实例或者通用数据模型的实例
-     * @description 
+     * @name Model::getInstance 数据模型实例获取（内部方法）
+     * @param bool $table 表名,默认为空，可以传入字符串
+     * @param null $engine 数据库类型，如果不传入，默认使用配置中 DB_ENGINE 指定的类型；对于自定义模型，此参数无意义；自定义数据模型的类型，由其继承的类决定
+     * @return string 返回一个自定义模型的实例或者通用数据模型的实例
+     *
      * - 数据模型调用处理，快捷方法  M( $modelName ) 即包装了该方法
      * - 基本数据模型 和 通用数据模型均没有构造器部分的代码，自定义数据模型可以在构造器中自由编写代码，如指定 数据模型的 真实表名、数据库指针
      * - 调用改方法时，如果实例没有初始化则会进行一次初始化操作，初始化操作会载入配置中的数据库信息；
@@ -52,7 +50,7 @@ class Model{
         }
         #   检测自定义模型
         $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod_pub = realpath( ox::c('PATH_PUB').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
+        $mod_pub = ox::p('/'.ox::c('DIR_MOD').'/'.$table.'.php');
         $mod = $mod_app ? $mod_app : $mod_pub ;
         
         $ins = $mod;
@@ -150,6 +148,19 @@ class Model{
                 $sql[] = $this->operate['table'];
                 $sql[] = 'WHERE '.$this->operate['where'];
                 $sql[] = empty( $this->operate['limit'] ) ? ' LIMIT 1 ' : 'LIMIT ' .$this->operate['limit'];
+                return $this->query( implode(' ',$sql) );
+                break;
+            case 'deleteAll':          #   删
+                if( $arg ){ $this->where($arg); }
+                if( empty( $this->operate['where'] ) ){
+                    if(  $this->operate['debug'] == 1 ){
+                        ox::l('MQL查询错误！不允许无条件删除',3,3);
+                    }
+                    return false;
+                }
+                $sql[] = 'DELETE FROM';
+                $sql[] = $this->operate['table'];
+                $sql[] = 'WHERE '.$this->operate['where'];
                 return $this->query( implode(' ',$sql) );
                 break;
             /**
@@ -268,7 +279,7 @@ class Model{
              * @name Model->data 设置操作栈的data
              * @function
              * @param $args {Array} 一个条数据条目的数组
-             * @return {Instace} 返回实例
+             * @return {Instance} 返回实例
              * @description 参数必须是有键值对的数组；参数的key和value会被 addslashes
              */
             case 'data':
@@ -292,7 +303,7 @@ class Model{
              * @alias Model->select
              * @function
              * @param $args {String} 字段字符串
-             * @return {Instace} 返回实例
+             * @return {Instance} 返回实例
              * @description 字段选择操作
              */
             case 'select':
@@ -304,7 +315,7 @@ class Model{
              * @function
              * @param  $start {String} 如果没有$end且不是以逗号分割的字符串，那么$start为0，这个参数会被设置为$end
              * @option $end   {String} 如果有这个参数，那么$start，$end即为limit的设置
-             * @return {Instace} 返回实例
+             * @return {Instance} 返回实例
              * @description 数据条目限制
              */
             case 'limit':
@@ -340,7 +351,7 @@ class Model{
              * @name Model->other 其他的操作
              * @function
              * @param  $args {String} 参数
-             * @return {Instace} 返回实例
+             * @return {Instance} 返回实例
              * @description 未知的操作会被，以操作名为键，参数为值压入操作栈
              */
             default:
@@ -352,11 +363,14 @@ class Model{
 
 }
 /**
- * @name M 数据模型获取快捷方法
+ * @name 数据模型获取快捷方法
  * @function
  * @short
- * @return {Instace} 返回数据模型实例
- * @description 详细功能参考 @see Model::getInstance
+ * @param bool $t
+ * @param null $e
+ * @return string 返回数据模型实例
+ *
+ * 详细功能参考 @see Model::getInstance
  * @example 使用通用数据模型
  * M('user');
  * M('user','Csv');
