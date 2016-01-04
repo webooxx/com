@@ -17,7 +17,7 @@ function J(){
  */
 function I( $n=Null ){
      $p1 = C('PATH_APP').'/'. C('DIR_INC').'/'.$n  ;
-     $p2 = C('PATH_PUB').'/'. C('DIR_INC').'/'.$n  ;
+     $p2 = ox::p('/'. C('DIR_INC').'/'.$n);
      if( realpath(  $p1 ) ){ return include_once( $p1 ); }
      if( realpath(  $p2 ) ){ return include_once( $p2 ); }
      echo 'Class '.$n.' is non-existent! in '.$p1;
