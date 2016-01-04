@@ -10,13 +10,14 @@ class indexAction extends Action{
 
         #   必须在本地才可以进行build
         if( $_SERVER['HTTP_HOST']!='127.0.0.1' && $_SERVER['HTTP_HOST']!='ueassess.int.baidu.com' ){
-            die('filter Assess!');
             return false;
         }
         return true;
     }
 
     function index(){
+        $this->display();
+        return ;
 
         //ddump( f::init('ox.php' ,0,false, array("src/funcss_debug.php")  ));
         //ddump( f::init('ox.php' , false , 'mvc.min.php' ));
