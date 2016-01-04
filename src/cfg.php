@@ -44,7 +44,7 @@ array(
         'DEF_MOD'=> 'index',            #    默认请求的模块类
         'DEF_ACT'=> 'index',            #    默认执行的模块方法
         'DEF_ACT_EXT'=> 'Action',       #    默认模块类名后缀，例： indexAction.php
-        'DEF_TPL_EXT'=> '.html',        #    默认模板的后缀，例： index.html
+        'DEF_TPL_EXT'=> '.php',        #    默认模板的后缀，例： index.html
 
         #   自动重设路径，只读
         'PATH_APP'=> '.',               #    框架运行时自动设置
