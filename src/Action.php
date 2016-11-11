@@ -1,258 +1,409 @@
-<?php # 控制器基类
+<?php
+
 /**
- * @name Action 控制器基类
- * @class
- * @description
- * - 所有的应用程序的控制器模块，均继承此基类，该类没有构造函数，所以 控制器 的代码逻辑中允许自由编写构造函数。
- * - 调用了一个不存在的控制器时，会尝试去执行框架自带的对应控制器。如果也不存在对应的默认控制器，则会报错。
- * - 调用了控制器中不存在的一个方法时，会尝试去展现对应方法的模板。如果也不存在模板，则会报错。
- * @example 一个自定义实现的控制器代码
- * 
- * class indexAction extends Action{
- *     function __construct(){  }
- *     function index(){
- *         echo '默认首页';
- *     }
- * }
- * 
+ * 控制器
  */
-class Action {
-
-    public $Module_From    = '.';
-    public $Module_Name    = '.';
-    public $Method_Name    = '.';
-
-    public $Tpl_Variables  = array();
-    public $Layout_Name    = false;
+class Action
+{
+    /**
+     * 模块在 mvc 中初始化的时候，会被重设为正确的路径
+     * 作为一个属性，在不同的 App 同名的 Action 中，比作为静态属性有用
+     * @var string
+     */
+    public $modulePath = '';
 
     /**
-     * @name Action->redirect 控制器辅助跳转
-     * @function
-     * @option $url 需要跳转到的目标地址
+     * 模块名
+     * @var string
      */
-    function _action_redirect( $url ){
-        return header("location:".$url[0]."");
+    public $moduleName = 'index';
+
+    /**
+     * 当前执行的方法名，仅在 mvc 中执行外部调用的时候被设置
+     * @var string
+     */
+    public $methodName = 'index';
+
+    /**
+     * 当前的类名
+     * @var string
+     */
+    public $className = 'indexAction';
+
+    /**
+     * 模板变量，display之后被清空
+     * @var array
+     */
+    public $displayVal = array();
+
+    /**
+     * 视图模板的布局模版
+     * @var null
+     */
+    public $layoutName = null;
+
+    /**
+     * Action constructor. do nothing in here
+     */
+    function __construct()
+    {
     }
 
     /**
-     * @name Action->display 模板展现方法
-     * @function
-     * @option $name {String} 模板名称，模板参数允许【 null 】【 Method.html 】【 Module/Method.html 】【  THEME/Module/Method.html  】
-     * @option $data {Array}  模板变量，是一个键值对的数组
-     * @description 执行这个方法后，页面会直接 echo 出编译后的模板文件信息
+     * 过滤函数，传入当前的  $methodName 返回的值若为 false 则系统停止执行，并触发异常
+     * @param bool|string $methodName
+     * @return bool
      */
-    function _action_display( $args = array() ){
-
-        $name = $args[0] ? $args[0] : null;
-        $data = $args[1] ? $args[1] : null;
-        if(!is_null($data)){
-            foreach($data as $k=>$v){
-                $this->assign($k,$v);
-            }
-        }
-        @header("Content-type:text/html");
-        echo $this->fetch( $name);
+    function filterAccess($methodName = true)
+    {
+        return $methodName;
     }
 
-    function _action_layout( $name = array() ){
-        $this->Layout_Name = $name[0];
-    }
-    function _action_layout_release( $content ){
-        $name = $this->Layout_Name; 
-        $this->Layout_Name = false;
-
-        $this->assign('content',$content);
-        $content = $this->fetch( $name );
-
-        return $content;
-    }
-    /**
-     * 模板编译方法
-     * @param array $args   模板参数
-     * @param bool $isInc   是否是引用模式，第一次进入，在最外层非引用，其他情况下是引用模式
-     * @return mixed|string
-     * @description
-     * - 模板编译时会自动替换模板中的关键字，array('../Public/','../../','./' ) 替换为 TPL_URL_PUBLIC 、TPL_URL_ROOT、TPL_URL_RELATIVE
-     * - 模板编译时会自动处理模板中的 include 关键字(注意需要有模板界符以及不要循环引用)
-     * - 模板变量设置可以参考 @see Action->display 中设置，也可以参考 @ses Action->assign
-     * - 模板编译引擎目前只支持PHP语法
-     */
-    function _action_fetch( $args = array() , $isInc = false ){
-
-        $name = $args[0] ? $args[0] : null;
-
-        #   模板参数允许【 null 】【 Method.html 】【 Module/Method.html 】【  THEME/Module/Method.html  】
-    
-        $path_info = array( ox::c('PATH_APP') , ox::c('DIR_TPL') , ox::c('TPL_THEME') , '3::MODULE' , '4::METHOD.html/Filename'  );
-
-        $path_info[3] = $this->Module_Name;
-        $path_info[4] = $this->Method_Name . ox::c('DEF_TPL_EXT');
-
-        if( !is_null($name) ){
-
-            $name_split = explode('/', $name);
-            switch ( count($name_split) ) {
-                case '1':
-                    $path_info[4] = $name_split[0];
-                break;
-                case '2':
-                    $path_info[3] = $name_split[0];
-                    $path_info[4] = $name_split[1];
-                break;
-                case '3':
-                    $path_info[2] = $name_split[0];
-                    $path_info[3] = $name_split[1];
-                    $path_info[4] = $name_split[2];
-                break;
-            }
-        }
-
-        #   会尝试在共享目录中寻找模板文件
-        $path_final = realpath( implode('/', $path_info ) );
-
-        $path_info[0] = '';
-        $path_final_pub = ox::p(  '/'.implode('/', $path_info ) );
-
-
-        $path_final = $path_final ? $path_final :$path_final_pub;
-
-        if( !$path_final ){
-            if(ENV == 'online'){
-                array_shift($path_info);
-            }
-            return 'Template: <font color="red">'. implode('/', $path_info ) . '</font> is non-existent!' ;
-        }
-
-        $_root  = $_SERVER['DOCUMENT_ROOT'];              # '/Users/lyn/wwwroot/ue.baidu.com/10'
-        $_uri   = str_replace('\\','/',substr(PATH_APP,strlen($_root)));        #  dirname($_SERVER[SCRIPT_NAME]).'/'
-
-        $_dir_tpl_theme = ltrim(str_replace('/./','/',ox::c('DIR_APP').'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'),'./');
-
-        $_dir_public   = $_dir_tpl_theme.'/Public/';
-        $_dir_relative = $_dir_tpl_theme.$path_info[2].'/'.$path_info[3].'/';
-
-        ox::c('TPL_URL_ROOT'     , rtrim( ('//'.$_SERVER['HTTP_HOST']), '/' ) . '/' . rtrim($_uri,'/').'/' )  ;
-        ox::c('TPL_URL_PUBLIC'   , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_public.'/')) ;
-        ox::c('TPL_URL_RELATIVE' , ox::c('TPL_URL_ROOT') .str_replace(array('/./','//'),'/',$_dir_relative));
-
-
-        #   如果存在模板文件
-        $content = file_get_contents( $path_final );
-
-        #   模板关键字替换
-        $content = preg_replace('/(href=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
-        $content = preg_replace('/(src=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1".ox::c('TPL_URL_PUBLIC' )."$3 $4",$content );
-
-        $content = preg_replace('/(href=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_RELATIVE' )."$3 $4",$content );
-        $content = preg_replace('/(src=")(?!http)(\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_RELATIVE' )."$3 $4",$content );
-
-        $content = preg_replace('/(href=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_ROOT' )."$3 $4",$content );
-        $content = preg_replace('/(src=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1".ox::c('TPL_URL_ROOT' )."$3 $4",$content );
-
-        #   处理引用，引用文件不存在时，由PHP的include默认错误进行处理
-        $content = preg_replace_callback('/'.ox::c('TPL_LEFT_DELIMITER').'\s?include\s+([^}]*)\s?'.ox::c('TPL_RIGHT_DELIMITER').'/', array('self','_fetch_inc_callback'), $content );
-
-        $content = preg_replace('/('.ox::c('TPL_LEFT_DELIMITER').')\s*\$(.*?);?\s*('.ox::c('TPL_RIGHT_DELIMITER').')/','<?php echo \$$2; ?>',$content);
-        $content = preg_replace('/('.ox::c('TPL_LEFT_DELIMITER').')\s*(.*?);?\s*('.ox::c('TPL_RIGHT_DELIMITER').'){1}/','<?php $2; ?>',$content);
-        
-
-        #   模板变量释放
-        if( !$isInc ){
-           
-            $tmp_name = tempnam(sys_get_temp_dir(),"oxTpl_");
-            $handle = fopen($tmp_name, "w");
-
-
-            fwrite($handle, $content);
-            fclose($handle);
-                if( ox::c('TPL_ENGINE') == 'php' ){
-                    
-                    $content = '';
-                    extract($this->Tpl_Variables );
-
-                    ob_start();
-                        $content = include( $tmp_name );
-                        $content = ob_get_contents();
-                        if( $this->Layout_Name ){
-                            $content = $this->_action_layout_release($content);
-                        }
-                    ob_end_clean();
-                    
-                }else{
-                    $content = A( ox::c('TPL_ENGINE') )->fetch( $tmp_name , $this->Tpl_Variables );
-                }
-
-            unlink($tmp_name);
-        }
-
-        return $content;
-    }
     /**
      * 模板变量赋值
-     * @param array $args 变量名、变量值
+     * @param  string|array $n 字符串情况下会以 $n 为键，后续的 $v 为值，为数组，则是批量赋值
+     * @param  mixed|null $v 单个模板变量的值
+     * @return array    模板变量
+     */
+    function assign($n, $v = null)
+    {
+        if (is_array($n)) {
+            $this->displayVal = array_merge($this->displayVal, $n);
+        } else {
+            $this->displayVal[ $n ] = $v;
+        }
+        return $this->displayVal;
+    }
+
+
+    /**
+     * 快速重定向到URL
+     * @param  string $url URL地址
      * @return null
      */
-    #   模板赋值
-    function _action_assign($args = array()){
-        $n = $args[0] ? $args[0] : null;
-        $v = isset($args[1]) ? $args[1] : null;
-        return $v===Null ?  $this->Tpl_Variables[$n] :  $this->Tpl_Variables[$n] = $v;
+    function redirect($url = '')
+    {
+        header("location:" . $url . "");
+        return true;
     }
-    function _fetch_inc_callback( $arg ){ return $this->_action_fetch( array( trim($arg[1]) ),true ); }
 
-    #    魔术方法，以处理 A 找不到模块的情况，以及浏览器入口处理
-    function __call( $name , $args ){
+    /**
+     * 设置模版布局，和当前的 Method 绑定
+     * @param string $name
+     * @return string
+     */
+    function layout($name = '')
+    {
+        $this->layoutName[ $this->methodName ] = $name;
+        return $name;
+    }
 
-        $m = $this->Module_Name;
-
-        #   浏览器的请求
-        if( $name == '_call_' ){
-            $a = $args[0]['a'];
-            #   需要验证的话
-            if(  method_exists($this, 'filterAssess') && !$this->filterAssess($a) ){
-                ox::l('模块 filterAssess 验证不通过!',99,99);
-            }
-            if( method_exists($this, $a) ){
-                ox::l('浏览器调用 '.$m.'->'.$a.' 已准备!');
-                 return $this->$a();
-            }else{
-                ox::l('浏览器调用 '.$m.'->'.$a. ' 不存在!', 2 );
-                #   尝试展现模板 Line:136
-            }
-        }else{
-            #   模块调用请求处理
-            $realname = '_action_'.$name ;
-            $a = $name;
-            if( method_exists($this, $realname) ){
-                ox::l('模块调用 '.$a.'  已准备!');
-                return $this->$realname( $args );
-            }else{
-                ox::l('模块调用 '.$a. ' 不存在!', 2 );
-                #   尝试展现对应方法的模板
-            }
+    /**
+     * 获取模板字符串
+     * @param string $name
+     * @param bool|array $isInclude 如果作为一个数组，则模版的变量将完全使用这个数组
+     * @return mixed|string
+     * @throws Exception
+     */
+    function fetch($name = '', $isInclude = false)
+    {
+        mvc::log('fetch:' . $name);
+        if (is_array($isInclude)) {
+            $this->_displayVal = $isInclude;
+            $isInclude = false;
         }
-        #   尝试展现模板
-        $template = realpath( $this->Module_From.'/'.ox::c('DIR_TPL').'/'.ox::c('TPL_THEME').'/'.$m.'/'.$a.ox::c('DEF_TPL_EXT') );
 
-        ox::l('尝试展现模板 '.$template ,1 );
-        if( $template ){
+        $pathFinal = $this->_inside_call_makeTemplateFinalPath($name);
+
+        if (!$pathFinal) {
+            return 'Template: <font color="red">' . $name . '</font> is non-existent!';
+        }
+
+        $content = $this->_inside_call_replaceTemplateUrl(file_get_contents($pathFinal));
+
+        /**
+         * 处理引用
+         * 引用文件不存在时
+         * 由PHP的include默认错误进行处理
+         */
+        $content = preg_replace_callback('/' . mvc::config('TPL_LEFT_DELIMITER') . '\s?include\s+([^}]*)\s?' . mvc::config('TPL_RIGHT_DELIMITER') . '/', array('self', '_inside_call_fetchCallBack'), $content);
+
+        /**
+         * 模版界定符 还原为 php 语句
+         */
+        $content = preg_replace('/(' . mvc::config('TPL_LEFT_DELIMITER') . ')\s*\$(.*?);?\s*(' . mvc::config('TPL_RIGHT_DELIMITER') . ')/', '<?php echo \$$2; ?>', $content);
+        $content = preg_replace('/(' . mvc::config('TPL_LEFT_DELIMITER') . ')\s*(.*?);?\s*(' . mvc::config('TPL_RIGHT_DELIMITER') . '){1}/', '<?php $2; ?>', $content);
+
+        /**
+         * 如果是引用模式，返回当前引用的内容
+         */
+        if ($isInclude === true) {
+            return $content;
+        }
+
+        /**
+         * 否则释放变量
+         */
+        $tmpFilePath = tempnam(sys_get_temp_dir(), "mvcTpl_" . date('YmdHIs') . '_');
+        $displayVal = isset($this->_displayVal) ? $this->_displayVal : $this->displayVal;
+
+        $content = $this->extract($content, $displayVal, $tmpFilePath);
+
+        return $content;
+    }
+
+    /**
+     * 模版变量释放函数，单独用一个函数处理，尽量减少变量的符号列表
+     * @param string $__content
+     * @param array $__displayVal
+     * @param string $__tmpFilePath
+     * @return mixed|string
+     * @throws Exception
+     */
+    final public function extract($__content = '', $__displayVal = array(), $__tmpFilePath = '')
+    {
+        $__handle = fopen($__tmpFilePath, "w");
+
+        if (!file_exists($__tmpFilePath) || !$__handle) {
+            throw new Exception("模版目录不可写! 请检查: " . $__tmpFilePath, 1);
+        }
+
+        fwrite($__handle, $__content);
+        fclose($__handle);
+        extract($__displayVal);
+        ob_start();
+        include_once $__tmpFilePath;
+        $__content = ob_get_contents();
+        ob_end_clean();
+
+        if ($this->layoutName[ $this->methodName ] != null) {
+            $__content = $this->_inside_call_releaseLayout($__content);
+        }
+        unlink($__tmpFilePath);        // @todo cache
+
+        return $__content;
+
+    }
+
+    /**
+     * 展现视图
+     *
+     * /**
+     * @param string $name
+     * @param array $displayVal
+     * @return mixed|string
+     */
+    function display($name = '', $displayVal = array())
+    {
+        if (count($displayVal) > 0) {
+            $this->assign($displayVal);
+        }
+        @header("Content-type:text/html");
+        echo $this->fetch($name);
+        return true;
+    }
+
+
+    /**
+     * 处理外部（浏览器）调用， 其他模块调用时候找不到方法的情况，不允许子类自由实现
+     * @param string $name 方
+     * @param string $name 方法名
+     * @param array $args 参数
+     * @return mixed
+     * @throws Exception
+     */
+    final function __call($name = '', $args = array())
+    {
+
+        /**
+         * 外部调用 _out__call
+         */
+        if ($name == '_out__call') {
+
+            $route = $args[0];
+            $m = $route['m'];
+            $a = $route['a'];
+            mvc::log('外部调开始');
+            /**
+             * 禁止调用保护方法
+             */
+            if (in_array($a, get_class_methods(__CLASS__))) {
+                throw new Exception("不允许从外部调用 Action 内的保护方法!", 1);
+            }
+            /**
+             * 进行 filterAccess 验证
+             */
+            if ($this->filterAccess($a) != true) {
+                throw new Exception("filterAccess 验证不通过!", 1);
+            }
+            /**
+             * 已经实现对应的方法，如 indexAction -> index
+             */
+            if (method_exists($this->className, $a)) {
+                mvc::log($a . '方法准备就绪');
+                return call_user_func_array(array($this, $a), $args);
+            }
+            /**
+             *  没有方法、尝试直接展现模版
+             */
+            mvc::log('无法执行: ' . $m . ' -> ' . $a . ' ,尝试展现模板');
+
+            $templateName = mvc::config('DIR_TPL') . '/' . mvc::config('TPL_THEME') . '/' . $route['m'] . '/' . $route['a'] . mvc::config('DEF_TPL_EXT');
+            $templateFile = realpath(mvc::config('PATH_APP') . '/' . $templateName);
+
+            mvc::log('模板路径: ' . $templateName);
+
+            if ($templateFile) {
+                return $this->display();
+            }
+            /**
+             * 没有对应的方法（一定有文件，否则模块初始化的时候，没有方法又没有模版直接会停止）、没有模版
+             */
+            throw new Exception('无法执行: ' . $m . ' -> ' . $a . ' ,也没有可以展现的模板: ' . $templateName, 1);
+        }
+
+        /**
+         * 内部调用 / 内部非 Action 定义的方法调用
+         */
+        mvc::log('内部不明确的调用开始 ' . $name);
+
+        $route = array(
+            'm' => $this->moduleName,
+            'a' => $name,
+        );
+
+        /**
+         * 尝试是否在特殊定义的函数中
+         */
+
+        /**
+         * 辅助函数 - fetch 中获取模版的最终路径
+         */
+        if ($name == '_inside_call_makeTemplateFinalPath') {
+
+            mvc::log('_inside_call_makeTemplateFinalPath');
+
+            $pathInfoArr = array(mvc::config('PATH_APP'), mvc::config('DIR_TPL'), mvc::config('TPL_THEME'), '3::MODULE', '4::METHOD.$DEF_TPL_EXT | Filename');
+            $pathInfoArr[3] = $this->moduleName;
+            $pathInfoArr[4] = $this->methodName . mvc::config('DEF_TPL_EXT');
+
+            if (!is_null($args[0])) {
+
+                $nameSplitArr = explode('/', $args[0]);
+                switch (count($nameSplitArr)) {
+                    /**
+                     * index.php  , 在当前控制器目录下
+                     */
+                    case 1:
+                        $pathInfoArr[4] = $nameSplitArr[0];
+                        break;
+                    /**
+                     * otherAction/index.php , 在其他控制器目录下
+                     */
+                    case 2:
+                        $pathInfoArr[3] = $nameSplitArr[0];
+                        $pathInfoArr[4] = $nameSplitArr[1];
+                        break;
+                    /**
+                     * theme/third-party/index.php 考虑主题
+                     */
+                    case 3:
+                        $pathInfoArr[2] = $nameSplitArr[0];
+                        $pathInfoArr[3] = $nameSplitArr[1];
+                        $pathInfoArr[4] = $nameSplitArr[2];
+                        break;
+                }
+            }
+            /**
+             * 模板文件路径 - 1
+             */
+            $pathFinal = realpath(implode('/', $pathInfoArr));
+            /**
+             * unset 0::PATH_APP
+             */
+            unset($pathInfoArr[0]);
+            /**
+             * 共享项目模板文件路径 - 2
+             */
+            $pathFinalInShareApp = mvc::getShareAppFile('/' . implode('/', $pathInfoArr));
+            /**
+             * 最终模板文件路径
+             */
+            $pathFinal = $pathFinal ? $pathFinal : $pathFinalInShareApp;
+            return $pathFinal;
+        }
+
+        /**
+         * 辅助函数 - fetch 中替换模版内容中的路径字符串
+         * 替换 href="../Public/" 和 src="../Public/" 的情况，以 http 开头的不替换
+         */
+        if ($name == '_inside_call_replaceTemplateUrl') {
+            $content = $args[0];
+
+            /**
+             *  替换 href="../Public/" 和 src="../Public/"  => TPL_URL_PUBLIC
+             */
+            $content = preg_replace('/(href=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_PUBLIC') . "$3 $4", $content);
+            $content = preg_replace('/(src=")(?!http)(\.\.\/Public\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_PUBLIC') . "$3 $4", $content);
+
+            // $content = preg_replace('/(href=")(?!http)(\.\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_RELATIVE') . "$3 $4", $content);
+            // $content = preg_replace('/(src=")(?!http)(\.\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_RELATIVE') . "$3 $4", $content);
+
+            /**
+             *  替换 href="../../" 和 src="../../"  => TPL_URL_ROOT
+             */
+            $content = preg_replace('/(href=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_ROOT') . "$3 $4", $content);
+            $content = preg_replace('/(src=")(?!http)(\.\.\/\.\.\/)([^"]+)(")/', "$1" . mvc::config('TPL_URL_ROOT') . "$3 $4", $content);
+            return $content;
+        }
+
+        /**
+         * 辅助函数 - mvc::module 中初始化重设模版相关的 URL, eg: TPL_URL_PUBLIC
+         */
+
+        if ($name == '_inside_call_setConfigTemplateURL') {
+
+            $pathApp = mvc::config('PATH_APP');
+            $pathPublic = realpath(implode('/', array(mvc::config('PATH_APP'), mvc::config('DIR_TPL'), mvc::config('TPL_THEME'), 'Public')));
+
+            $tplUrlRoot = rtrim('//' . $_SERVER['HTTP_HOST'], '/') . dirname($_SERVER['PHP_SELF']);
+            $tplUrlPublic = $tplUrlRoot . substr($pathPublic, strlen($pathApp));
+
+            mvc::config('TPL_URL_ROOT', $tplUrlRoot . '/');
+            mvc::config('TPL_URL_PUBLIC', $tplUrlPublic . '/');
+
+            return '';
+        }
+
+        /**
+         * 辅助函数 fetch 递归处理引用
+         */
+        if ($name == '_inside_call_fetchCallBack') {
+            return $this->fetch(trim($args[0][1]), true);
+        }
+
+        /**
+         * 辅助函数 fetch 处理模板设置了 layout 的情况
+         */
+        if ($name == '_inside_call_releaseLayout') {
+            $content = $args[0];
+            $name = $this->layoutName[ $this->methodName ];
+            $this->layoutName[ $this->methodName ] = null;
+            $content = $this->fetch($name, array('content' => $content));
+            return $content;
+        }
+
+        /**
+         * 尝试展现模版
+         */
+        $templateName = mvc::config('DIR_TPL') . '/' . mvc::config('TPL_THEME') . '/' . $route['m'] . '/' . $route['a'] . mvc::config('DEF_TPL_EXT');
+        $templateFile = realpath(mvc::config('PATH_APP') . '/' . $templateName);
+
+        mvc::log('模板路径: ' . $templateName);
+
+        if ($templateFile) {
             return $this->display();
-        }else{
-            ox::l( '模块方法和模板都不存在!' , 3 , 3 ) ;
         }
+        throw new Exception('内部调用无法执行: ' . $route['m'] . ' -> ' . $route['a'] . ' ,也没有可以展现的模板: ' . $templateName, 1);
     }
-}
-/**
- * @name A 控制器模块获取快捷方法
- * @function
- * @short
- * @return {Instance} 返回控制器实例
- * @description 详细功能参考 @see ox::m
- * @example 调用其他控制器模块
- * A('tools')->args();
- */
-function A( $m = '' ){
-    $route = ox::r( array(ox::c('DEF_REQ_KEY_MOD')=>$m) );
-    ox::l( '调用模块: '.$route['m'] );
-    return ox::m( $route );
 }

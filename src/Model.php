@@ -11,16 +11,16 @@
  * - 自定义数据模型 应该对应一个数据表的记录，而非一种 通用数据类型 的记录。
  * - 数据模型基类 中定义了一系列的SQL操作，使得 数据模型 实例 可以使用链式的语法来构建SQL
  * - 定义了必须由 通用数据模型 实现的方法；query 和 connect
- *  
+ *
  * @example 一个自定义实现的模型代码
- * 
+ *
  * class user extends MysqlModel{
  *     function __construct(){  }
  *     function getUserById(){
- *         
+ *
  *     }
  * }
- * 
+ *
  */
 
 class Model{
@@ -41,18 +41,18 @@ class Model{
      * - 如果是 通用模型 或者 自定义模型，并且没有设置 $this->operate['table'] 的话；会执行一次 $this->table( $table )
      */
     public  static function getInstance( $table = false , $engine = Null ){
-        $engine  = ( $engine ? $engine : ox::c('DB_ENGINE') ).'Model';
+        $engine  = ( $engine ? $engine : mvc::config('DB_ENGINE') ).'Model';
         #   是否已缓存
         $cache_name = $table;
-        if( $ins = Model::$instances[$cache_name] ){
+        if( isset( Model::$instances[$cache_name] ) && $ins = Model::$instances[$cache_name] ){
             $ins->table( $table );
             return $ins;
         }
         #   检测自定义模型
-        $mod_app = realpath( ox::c('PATH_APP').'/'.ox::c('DIR_MOD').'/'.$table.'.php'  );
-        $mod_pub = ox::p('/'.ox::c('DIR_MOD').'/'.$table.'.php');
+        $mod_app = realpath( mvc::config('PATH_APP').'/'.mvc::config('DIR_MOD').'/'.$table.'.php'  );
+        $mod_pub = mvc::getShareAppFile('/'.mvc::config('DIR_MOD').'/'.$table.'.php');
         $mod = $mod_app ? $mod_app : $mod_pub ;
-        
+
         $ins = $mod;
 
         if( $mod ){
@@ -73,14 +73,14 @@ class Model{
     }
 
     function __call( $act , $args = array() ){
-        $arg = $args[0];
+        $arg = isset($args[0]) ? $args[0] : array();
         switch ( $act ) {
 
             /**
              * @name Model->db 数据库信息设置
              * @function
              * @option $name {String|Number} 可选，传入的字符或者数字，对应 DBS 的键
-             * @description 
+             * @description
              * @return {Array|Instance} 根据参数，返回数据库配置信息或者实例
              * - 在不传入参数的时候，会返回当前选择的数据库配置信息
              * - 传入参数后，会更新数据库的 键指向 ，并且会重新执行 $this->connect() 方法; @see Action->connect
@@ -95,13 +95,14 @@ class Model{
                     return $arg;
                 }else{
                     return array(
-                        'DB_ENGINE'=> ox::c('DB_ENGINE'),
-                        'DB_PREFIX'=> ox::c('DB_PREFIX'),
-                        'DB_HOST' => ox::c('DB_HOST'),
-                        'DB_NAME' => ox::c('DB_NAME'),
-                        'DB_USERNAME' => ox::c('DB_USERNAME'),
-                        'DB_PASSWORD' => ox::c('DB_PASSWORD'),
-                        'DB_DEFCHART' => ox::c('DB_DEFCHART'),
+                        'DB_ENGINE'=> mvc::config('DB_ENGINE'),
+                        'DB_PREFIX'=> mvc::config('DB_PREFIX'),
+                        'DB_HOST' => mvc::config('DB_HOST'),
+                        'DB_NAME' => mvc::config('DB_NAME'),
+                        'DB_USERNAME' => mvc::config('DB_USERNAME'),
+                        'DB_PASSWORD' => mvc::config('DB_PASSWORD'),
+                        'DB_CHART' => mvc::config('DB_CHART'),
+                        'DB_PORT' => mvc::config('DB_PORT'),
                     );
                 }
                 break;
@@ -109,7 +110,7 @@ class Model{
              * @name Model->add 构建插入数据的SQL，并且执行
              * @function
              * @option $args {Array} 可选，可以传入一个数组作为插入的数据字段
-             * @description  
+             * @description
              * @return {Boolean} 由继承 的的通用模型 决定返回值
              */
             case 'add':             #   增
@@ -135,12 +136,12 @@ class Model{
              * @return {Boolean} 由继承 的的通用模型 决定返回值
              * @description 如果没有传入参数作为删除条件，并且也没有where设置，那么删除语句将不会执行，并且抛出一个错误日志
              */
-            case 'del':             
+            case 'del':
             case 'delete':          #   删
                 if( $arg ){ $this->where($arg); }
                 if( empty( $this->operate['where'] ) ){
                     if(  $this->operate['debug'] == 1 ){
-                        ox::l('MQL查询错误！不允许无条件删除',3,3);
+                        mvc::log('MQL查询错误！不允许无条件删除',3,3);
                     }
                     return false;
                 }
@@ -154,7 +155,7 @@ class Model{
                 if( $arg ){ $this->where($arg); }
                 if( empty( $this->operate['where'] ) ){
                     if(  $this->operate['debug'] == 1 ){
-                        ox::l('MQL查询错误！不允许无条件删除',3,3);
+                        mvc::log('MQL查询错误！不允许无条件删除',3,3);
                     }
                     return false;
                 }
@@ -173,7 +174,7 @@ class Model{
                 if( $arg ){ $this->data($arg); }
                 if( empty( $this->operate['where'] ) ){
                     if(  $this->operate['debug'] == 1 ){
-                        ox::l('MQL查询错误！不允许无条件更新',3,3);
+                        mvc::log('MQL查询错误！不允许无条件更新',3,3);
                     }
                     return false;
                 }
@@ -251,7 +252,7 @@ class Model{
                 }
                 foreach( $_tableA as $item ){
                     $tableMap = preg_split('/(\s+as\s+|\s+)/i',trim($item));
-                    $_tableB[] = '`'.ox::c('DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
+                    $_tableB[] = '`'.mvc::config('DB_PREFIX').trim($tableMap[0]).'`'.(count($tableMap) >1 ? ' AS '.trim($tableMap[1]) : '');
                 }
                 $this->operate['table'] = implode( ' , ',$_tableB );
                 break;
@@ -338,14 +339,14 @@ class Model{
              * @description 必须由子类实现，否则将抛出一个错误日志
              */
             case 'query':
-            /**
-             * @name Model->connect 数据库连接操作
-             * @function
-             * @return {Any} 由子类确定返回值
-             * @description  返回的值会被设置到$this->handel中，必须由子类实现，否则将抛出一个错误日志
-             */
+                /**
+                 * @name Model->connect 数据库连接操作
+                 * @function
+                 * @return {Any} 由子类确定返回值
+                 * @description  返回的值会被设置到$this->handel中，必须由子类实现，否则将抛出一个错误日志
+                 */
             case 'connect':
-                ox::l('子类未实现操作 '. $act .' !',99,99);
+                mvc::log('子类未实现操作 '. $act .' !',99,99);
                 break;
             /**
              * @name Model->other 其他的操作
