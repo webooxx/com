@@ -29,7 +29,7 @@ final class mvc
      */
     static function config($n = '', $v = null)
     {
-        return $v === null ? mvc::$config[ $n ] : mvc::$config[ $n ] = $v;
+        return $v === null ? mvc::$config[$n] : mvc::$config[$n] = $v;
     }
 
     /**
@@ -52,8 +52,8 @@ final class mvc
         if (count($argv) > 1) {
             $al = count($argv);
             for ($i = 1; $i < $al; $i++) {
-                $arg = explode('=', $argv[ $i ]);
-                $_GET[ $arg[0] ] = $arg[1];
+                $arg = explode('=', $argv[$i]);
+                $_GET[$arg[0]] = $arg[1];
             }
             $_REQUEST = $_GET;
 
@@ -103,9 +103,9 @@ final class mvc
         /**
          * 尝试读取已缓存的模块（此处缓存 $moduleFile）
          */
-        if (isset(self::$module[ $moduleName ])) {
+        if (isset(self::$module[$moduleName])) {
             self::log('返回已经缓存控制器:' . $moduleName);
-            return self::$module[ $moduleName ];
+            return self::$module[$moduleName];
         }
         /**
          * 已经预加载了 同名模块 直接返回这个模块，此处缓存 $moduleName
@@ -128,10 +128,10 @@ final class mvc
 
         if ($moduleFile && include_once($moduleFile)) {
             self::log('控制器加载:' . $moduleFile);
-            self::$module[ $moduleName ] = new $moduleName();
-            self::$module[ $moduleName ]->modulePath = dirname($moduleFile);
-            self::$module[ $moduleName ]->_inside_call_setConfigTemplateURL();
-            return self::$module[ $moduleName ];
+            self::$module[$moduleName] = new $moduleName();
+            self::$module[$moduleName]->modulePath = dirname($moduleFile);
+            self::$module[$moduleName]->_inside_call_setConfigTemplateURL();
+            return self::$module[$moduleName];
         }
 
 
@@ -149,10 +149,10 @@ final class mvc
         self::log('模板路径: ' . $templateName);
 
         if ($templateFile) {
-            self::$module[ $moduleName ] = new Action();
-            self::$module[ $moduleName ]->modulePath = realpath(self::config('PATH_APP')) . '/' . self::config('DIR_ACT');
-            self::$module[ $moduleName ]->_inside_call_setConfigTemplateURL();
-            return self::$module[ $moduleName ];
+            self::$module[$moduleName] = new Action();
+            self::$module[$moduleName]->modulePath = realpath(self::config('PATH_APP')) . '/' . self::config('DIR_ACT');
+            self::$module[$moduleName]->_inside_call_setConfigTemplateURL();
+            return self::$module[$moduleName];
         }
         throw new Exception("没有可用的控制器: " . $moduleName . ' ,也没有可以展现的模板: ' . $templateName, 1);
     }
@@ -186,13 +186,23 @@ final class mvc
         $req_r = self::config('DEF_REQ_KEY_RUT');
         $req_a = self::config('DEF_REQ_KEY_ACT');
         $req_m = self::config('DEF_REQ_KEY_MOD');
-        if (isset($GET[ $req_r ])) {
-            $r = explode('/', $GET[ $req_r ]);
+        if (isset($GET[$req_r])) {
+            $r = explode('/', $GET[$req_r]);
             $m = isset($r[0]) ? htmlspecialchars(trim($r[0])) : self::config('DEF_MOD');
             $a = isset($r[1]) ? htmlspecialchars(trim($r[1])) : self::config('DEF_ACT');
+            if (isset($r[2])) {
+                $args = array();
+                $len = count($r);
+                for ($i = 2; $i < $len; $i += 2) {
+                    if ($r[$i] === '') {
+                        continue;
+                    }
+                    $args[$r[$i]] = isset($r[$i + 1]) ? $r[$i + 1] : null;
+                }
+            }
         } else {
-            $m = isset($GET[ $req_m ]) ? htmlspecialchars(trim($GET[ $req_m ])) : self::config('DEF_MOD');
-            $a = isset($GET[ $req_a ]) ? htmlspecialchars(trim($GET[ $req_a ])) : self::config('DEF_ACT');
+            $m = isset($GET[$req_m]) ? htmlspecialchars(trim($GET[$req_m])) : self::config('DEF_MOD');
+            $a = isset($GET[$req_a]) ? htmlspecialchars(trim($GET[$req_a])) : self::config('DEF_ACT');
         }
         return array(
             'm' => $m,
@@ -210,7 +220,7 @@ final class mvc
         $mt = explode(' ', microtime());
         $trace = debug_backtrace();
         $trace = $trace[0];
-        $info = substr($trace['file'], strlen(PATH_APP) + 1) . ' :: ' . $trace['line'];
+        $info = $trace['file'] . ' :: ' . $trace['line'];
         $msg = $prefix . ' ' . $msg;
         self::$log[] = array(
             'date' => date('Y-m-d H:i:s', $mt[1]) . ' ' . substr($mt[0], 2),
