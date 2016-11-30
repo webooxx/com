@@ -47,6 +47,7 @@ class Action
      */
     function __construct()
     {
+
     }
 
     /**
@@ -70,7 +71,7 @@ class Action
         if (is_array($n)) {
             $this->displayVal = array_merge($this->displayVal, $n);
         } else {
-            $this->displayVal[ $n ] = $v;
+            $this->displayVal[$n] = $v;
         }
         return $this->displayVal;
     }
@@ -94,19 +95,57 @@ class Action
      */
     function layout($name = '')
     {
-        $this->layoutName[ $this->methodName ] = $name;
+        $this->layoutName[$this->methodName] = $name;
         return $name;
+    }
+
+
+    /**
+     * 为 smartyFetch 提供 Smarty 类，这个类是由核心函数自动加载的
+     * @return Smarty
+     */
+    function smartyInit()
+    {
+        if (!isset($this->smarty)) {
+            $smarty = new Smarty;
+            $this->smarty = $smarty;
+            $smarty->setCompileDir(sys_get_temp_dir() . '/smarty-compile');
+            $smarty->setCacheDir(sys_get_temp_dir() . '/smarty-cache');
+
+            mvc::log('setTemplateDir -> ' . sys_get_temp_dir());
+            mvc::log('setCompileDir & setCacheDir ->' . sys_get_temp_dir());
+        }
+        return $this->smarty;
+    }
+
+    /**
+     * TPL_ENGINE 为 smarty 时 fetch 获取内容会执行此函数
+     * @param string $name
+     * @return string
+     */
+    function  smartyFetch($name = '')
+    {
+        $smarty = $this->smartyInit();
+        $pathFinal = $this->_inside_call_makeTemplateFinalPath($name);
+        $smarty->setTemplateDir(dirname($pathFinal));
+        foreach ($this->displayVal as $k => $v) {
+            $smarty->assign($k, $v);
+        }
+        return $smarty->fetch($name);
     }
 
     /**
      * 获取模板字符串
      * @param string $name
-     * @param bool|array $isInclude 如果作为一个数组，则模版的变量将完全使用这个数组
+     * @param bool|array|string $isInclude 如果作为一个数组，则模版的变量将完全使用这个数组
      * @return mixed|string
      * @throws Exception
      */
     function fetch($name = '', $isInclude = false)
     {
+        if (C('TPL_ENGINE') === 'smarty') {
+            return $this->smartyFetch($name, $isInclude);
+        }
         mvc::log('fetch:' . $name);
         if (is_array($isInclude)) {
             $this->_displayVal = $isInclude;
@@ -176,7 +215,7 @@ class Action
         $__content = ob_get_contents();
         ob_end_clean();
 
-        if ($this->layoutName[ $this->methodName ] != null) {
+        if ($this->layoutName[$this->methodName] != null) {
             $__content = $this->_inside_call_releaseLayout($__content);
         }
         unlink($__tmpFilePath);        // @todo cache
@@ -387,8 +426,8 @@ class Action
          */
         if ($name == '_inside_call_releaseLayout') {
             $content = $args[0];
-            $name = $this->layoutName[ $this->methodName ];
-            $this->layoutName[ $this->methodName ] = null;
+            $name = $this->layoutName[$this->methodName];
+            $this->layoutName[$this->methodName] = null;
             $content = $this->fetch($name, array('content' => $content));
             return $content;
         }

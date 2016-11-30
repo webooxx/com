@@ -107,17 +107,6 @@ final class mvc
             self::log('返回已经缓存控制器:' . $moduleName);
             return self::$module[$moduleName];
         }
-        /**
-         * 已经预加载了 同名模块 直接返回这个模块，此处缓存 $moduleName
-         * 取消这个缓存操作，以防止触发 __autoload / spl_autoload_register
-         */
-        //mvc::log($moduleName . ' class_exists ' . class_exists($moduleName));
-        // if (class_exists($moduleName)) {
-        //     self::log('已预加载控制器:' . $moduleName);
-        //     self::$module[ $moduleName ] = new $moduleName;
-        //     return self::$module[ $moduleName ];
-        // }
-
 
         /**
          * 尝试引入控制器模块文件 - 1
@@ -296,7 +285,7 @@ register_shutdown_function('mvc::shutdown');
  * 尝试在 inc 目录下找到合适的类
  */
 spl_autoload_register(function ($class) {
-    include 'inc/' . $class . '.class.php';
+    include 'inc/' . $class . '/' . $class . '.class.php';
 });
 /**
  * 快速存取配置
