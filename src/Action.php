@@ -115,7 +115,7 @@ class Action
             mvc::log('setTemplateDir -> ' . sys_get_temp_dir());
             mvc::log('setCompileDir & setCacheDir ->' . sys_get_temp_dir());
         }
-        return $this->smarty;
+        return $this->_inside_call_replaceTemplateUrl($smarty->fetch($name));
     }
 
     /**
