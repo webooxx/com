@@ -131,7 +131,7 @@ class Action
         foreach ($this->displayVal as $k => $v) {
             $smarty->assign($k, $v);
         }
-        return $this->_inside_call_replaceTemplateUrl($smarty->fetch($name));
+        return $this->_inside_call_replaceTemplateUrl($smarty->fetch(basename($pathFinal)));
     }
 
     /**
