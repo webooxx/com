@@ -238,7 +238,12 @@ class Action
             $this->assign($displayVal);
         }
         @header("Content-type:text/html");
-        echo $this->fetch($name);
+        $content = $this->fetch($name);
+        if ($this->layoutName[$this->methodName] != null) {
+            $this->assign('content',$content);
+            $content = $this->fetch($this->layoutName[$this->methodName]);
+        }
+        echo $content;
         return true;
     }
 
