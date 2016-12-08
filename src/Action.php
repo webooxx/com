@@ -95,7 +95,7 @@ class Action
      */
     function layout($name = '')
     {
-        $this->layoutName[$this->methodName] = $name;
+        $this->layoutName = $name;
         return $name;
     }
 
@@ -215,7 +215,7 @@ class Action
         $__content = ob_get_contents();
         ob_end_clean();
 
-        if ($this->layoutName[$this->methodName] != null) {
+        if ($this->layoutName != null) {
             $__content = $this->_inside_call_releaseLayout($__content);
         }
         unlink($__tmpFilePath);        // @todo cache
@@ -239,9 +239,9 @@ class Action
         }
         @header("Content-type:text/html");
         $content = $this->fetch($name);
-        if ($this->layoutName[$this->methodName] != null) {
+        if ($this->layoutName != null) {
             $this->assign('content',$content);
-            $content = $this->fetch($this->layoutName[$this->methodName]);
+            $content = $this->fetch($this->layoutName);
         }
         echo $content;
         return true;
@@ -431,8 +431,8 @@ class Action
          */
         if ($name == '_inside_call_releaseLayout') {
             $content = $args[0];
-            $name = $this->layoutName[$this->methodName];
-            $this->layoutName[$this->methodName] = null;
+            $name = $this->layoutName;
+            $this->layoutName = null;
             $content = $this->fetch($name, array('content' => $content));
             return $content;
         }
