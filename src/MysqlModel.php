@@ -49,6 +49,7 @@ class MysqlModel extends Model
             mysqli_autocommit($link, false);
             $link->query('set names "' . $db['DB_CHART'] . '"');
         }
+        mysqli_autocommit($link, true);
         return $link;
     }
 
@@ -77,7 +78,6 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
-        mysqli_close($this->handle);
         return $result;
     }
 
@@ -102,7 +102,6 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
-        mysqli_close($this->handle);
         return $result;
     }
 
@@ -122,7 +121,6 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
-        mysqli_close($this->handle);
         return true;
     }
 
@@ -151,7 +149,16 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
-        mysqli_close($this->handle);
         return true;
+    }
+
+    /**
+     * 关闭连接
+     */
+    function __destruct()
+    {
+        if ($this->handle) {
+            mysqli_close($this->handle);
+        }
     }
 }
