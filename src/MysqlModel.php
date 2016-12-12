@@ -37,19 +37,15 @@ class MysqlModel extends Model
     function connect($db)
     {
         $link = null;
-        if ($db['DB_ENGINE'] == 'Mysql') {
+        $link = mysqli_connect('p:' . $db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_NAME'], $db['DB_PORT']);
 
-            $link = mysqli_connect('p:' . $db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_NAME'], $db['DB_PORT']);
+        if (!$link) {
+            throw new Exception('Connect Error (' . mysqli_connect_errno() . ') '
+                . mysqli_connect_error(), 1);
 
-            if (!$link) {
-                throw new Exception('Connect Error (' . mysqli_connect_errno() . ') '
-                    . mysqli_connect_error(), 1);
-
-            }
-            mysqli_autocommit($link, false);
-            $link->query('set names "' . $db['DB_CHART'] . '"');
         }
         mysqli_autocommit($link, true);
+        $link->query('set names "' . $db['DB_CHART'] . '"');
         return $link;
     }
 
