@@ -102,6 +102,15 @@ class MysqlModel extends Model
     }
 
     /**
+     * 返回表名
+     * @return mixed
+     */
+    function getTable(){
+        return $this->operate['table'];
+    }
+
+
+    /**
      * 删除表
      * @return array|bool
      */
