@@ -320,9 +320,10 @@ class Model{
              * @description 数据条目限制
              */
             case 'limit':
-                if( $args[1] ){
-                    $this->operate['limit'] = implode( ',', $args );
-                }else{
+                if( is_array($arg) ){
+                    $this->operate['limit'] = implode( ',', $arg );
+                }
+                if( is_string($arg) && !empty($arg)){
                     $limit = explode(',', $arg);
                     if( count($limit) == 1 ){
                         array_unshift( $limit , 0 );
