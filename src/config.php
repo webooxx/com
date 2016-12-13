@@ -17,7 +17,7 @@
 
         #    模板默认设置
         'TPL_THEME'           => '.',       #    模板主题目录,为一个 . 则默认不使用主题目录，模板目录即为主题目录    相对于 /app/tpl 项目目录
-        'TPL_ENGINE'          => 'php',     #    默认PHP，如果是 smarty ，则保持引入了 smarty 模块接口，因为会调用 A('smarty')->fetch( $path , $assign )，返回编译后的模板代码
+        'TPL_ENGINE' => 'php',     #    默认PHP，如果是 smarty ，则保持引入了 smarty 模块接口，因为会调用 A('smarty')->fetch( $path , $assign )，返回编译后的模板代码
         'TPL_LEFT_DELIMITER'  => '<!--{',   #    模板变量左分界符
         'TPL_RIGHT_DELIMITER' => '}-->',    #    模板变量右分界符
 

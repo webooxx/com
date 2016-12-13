@@ -188,7 +188,7 @@ final class mvc
                     }
                     $args[$r[$i]] = isset($r[$i + 1]) ? $r[$i + 1] : null;
                 }
-                $_GET  = array_merge($_GET,$args);
+                $_GET = array_merge($_GET, $args);
             }
         } else {
             $m = isset($GET[$req_m]) ? htmlspecialchars(trim($GET[$req_m])) : self::config('DEF_MOD');
