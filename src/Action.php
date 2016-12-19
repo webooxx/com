@@ -85,7 +85,7 @@ class Action
     function redirect($url = '')
     {
         header("location:" . $url . "");
-        return true;
+        exit(0);
     }
 
     /**
