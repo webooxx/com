@@ -37,15 +37,15 @@ class MysqlModel extends Model
     function connect($db)
     {
         $link = null;
-        $link = mysqli_connect('p:' . $db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_NAME'], $db['DB_PORT']);
+        $link = mysqli_connect($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_NAME'], $db['DB_PORT']);
 
         if (!$link) {
             throw new Exception('Connect Error (' . mysqli_connect_errno() . ') '
                 . mysqli_connect_error(), 1);
-
         }
         mysqli_autocommit($link, true);
         $link->query('set names "' . $db['DB_CHART'] . '"');
+
         return $link;
     }
 
@@ -74,6 +74,7 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
+
         return $result;
     }
 
@@ -98,6 +99,7 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
+
         return $result;
     }
 
@@ -105,7 +107,8 @@ class MysqlModel extends Model
      * 返回表名
      * @return mixed
      */
-    function getTable(){
+    function getTable()
+    {
         return $this->operate['table'];
     }
 
@@ -126,6 +129,7 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
+
         return true;
     }
 
@@ -154,6 +158,7 @@ class MysqlModel extends Model
             $result[] = $row;
         }
         mysqli_free_result($resource);
+
         return true;
     }
 
