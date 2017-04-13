@@ -123,7 +123,7 @@ class Action
      * @param string $name
      * @return string
      */
-    function  smartyFetch($name = '')
+    function smartyFetch($name = '')
     {
         $smarty = $this->smartyInit();
         $pathFinal = $this->_inside_call_makeTemplateFinalPath($name);
@@ -240,7 +240,7 @@ class Action
         @header("Content-type:text/html");
         $content = $this->fetch($name);
         if ($this->layoutName != null) {
-            $this->assign('content',$content);
+            $this->assign('content', $content);
             $content = $this->fetch($this->layoutName);
         }
         echo $content;
@@ -410,7 +410,7 @@ class Action
             $pathApp = mvc::config('PATH_APP');
             $pathPublic = realpath(implode('/', array(mvc::config('PATH_APP'), mvc::config('DIR_TPL'), mvc::config('TPL_THEME'), 'Public')));
 
-            $tplUrlRoot = rtrim('//' . $_SERVER['HTTP_HOST'], '/') . dirname($_SERVER['PHP_SELF']);
+            $tplUrlRoot = rtrim('//' . $_SERVER['HTTP_HOST'], '/') . dirname($_SERVER['SCRIPT_NAME']);
             $tplUrlPublic = $tplUrlRoot . substr($pathPublic, strlen($pathApp));
 
             mvc::config('TPL_URL_ROOT', $tplUrlRoot . '/');
@@ -433,7 +433,9 @@ class Action
             $content = $args[0];
             $name = $this->layoutName;
             $this->layoutName = null;
-            $content = $this->fetch($name, array('content' => $content));
+            $this->assign('content',$content);
+            $content = $this->fetch($name);
+
             return $content;
         }
 
