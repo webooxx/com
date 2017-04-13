@@ -226,8 +226,13 @@ final class mvc
      */
     static function exception($e)
     {
-        self::log($e->getMessage(), '[Exception:' . $e->getCode() . ']');
-        self::dieLog();
+        if (self::config('DEBUG')) {
+            self::log($e->getMessage(), '[Exception:' . $e->getCode() . ']');
+            self::dieLog();
+        } else {
+            header('HTTP/1.1 500 Internal Server Error');
+            exit(0);
+        }
     }
 
     /**
@@ -250,14 +255,18 @@ final class mvc
      */
     static function shutdown()
     {
-
         $e = error_get_last();
-        $msg = $e['message'] . ' from ' . substr($e['file'], strlen(PATH_APP) + 1) . ' line ' . $e['line'];
-        $prefix = '[FATAL ERROR:' . $e['type'] . ']';
-
         if ($e) {
+            $msg = $e['message'] . ' from ' . substr($e['file'], strlen(PATH_APP) + 1) . ' line ' . $e['line'];
+            $prefix = '[FATAL ERROR:' . $e['type'] . ']';
             self::log($msg, $prefix);
-            self::dieLog();
+
+            if (self::config('DEBUG')) {
+                self::dieLog();
+            } else {
+                header('HTTP/1.1 500 Internal Server Error');
+                exit(0);
+            }
         }
     }
 
@@ -285,9 +294,12 @@ register_shutdown_function('mvc::shutdown');
 /**
  * 尝试在 inc 目录下找到合适的类
  */
-spl_autoload_register(function ($class) {
+function my_autoload($class)
+{
     include 'inc/' . $class . '/' . $class . '.class.php';
-});
+}
+
+spl_autoload_register('my_autoload');
 /**
  * 快速存取配置
  * @param string $n
@@ -308,6 +320,7 @@ function A($m = '')
 {
     $route = mvc::route(array(mvc::config('DEF_REQ_KEY_MOD') => $m));
     mvc::log('内部调用模块: ' . $m);
+
     return mvc::module($route);
 }
 
