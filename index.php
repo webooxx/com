@@ -1,4 +1,6 @@
 <?php
+header('HTTP/1.1 404 Not Found');
+exit(0);
 /**
  * @file 应用入口文件
  *
