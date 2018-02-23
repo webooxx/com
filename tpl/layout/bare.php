@@ -1,2 +1,0 @@
-<?php //bare ?>
-<!--{$content}-->
