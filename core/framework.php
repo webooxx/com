@@ -132,6 +132,14 @@ class Core {
 class Controller
 {
     public $filePath = '';
+
+    /**
+     * 权限验证，从外部（浏览器）开始执行时，会先执行此函数，如果返回不为 true 则 throw 一个错误或者执行 auth_fail_handler
+     * @var [type]
+     */
+    public functoin auth( $funcName ){
+        return $funcName && true;
+    }
 }
 
 
