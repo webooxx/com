@@ -2,8 +2,8 @@
 namespace {
     $config = array(
         'ROUTER_KEY' => 'r',
-        'APP_NAME'   => 'app',
+        'APP_NAME'   => 'report',
     );
     require_once( dirname( __FILE__ ).'/core/framework.php' );
-    Framework\Core::init( array_merge( $config , include_once(  dirname( __FILE__ ).'/config.php') ) );
+    Framework\Core::init( $config );
 }
