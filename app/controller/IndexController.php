@@ -4,13 +4,15 @@
  */
 namespace app;
 use \Framework\Controller as Controller;
+// use \Framework\Utils as Utils;
 
 class IndexController extends Controller
 {
     function index()
     {
-        ddump( M('bs_user')->find());
-        // echo 'hello!';
-        // phpinfo();
+        ddump( A('index','report')->index() );
+    }
+    function help(){
+        echo 'help';
     }
 }

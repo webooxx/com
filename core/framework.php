@@ -8,25 +8,56 @@
  * ?r=a/b/c...          --> app/control/a/b/cController.php ..();
  */
 namespace {
-    function A( string $moduleName , string $prefix){
 
+    error_reporting(0);
+
+    function A( $moduleName , $nameSpace ){
+        $nsArray = null;
+        if( !empty( $nameSpace) ){
+            $nsArray = explode( '\\' , $nameSpace );
+        }
+        return Framework\Core::getExecutive( $moduleName , $type = 'controller' , $nsArray );
     }
     function M( $tableName , $nameSpace = null , $tablePrefix = null){
         $tableNameList = explode(' ',$tableName);
         $firstTable = $tableNameList[0];
         $tablePrefix = empty( $tablePrefix ) ? Framework\Core::$config['TABLE_PREFIX'] : $tablePrefix;
+
         $model = Framework\Core::getExecutive( $firstTable , 'model', $nameSpace );
         $model -> table( $tableName );
         $model -> prefix( $tablePrefix );
         return $model;
     }
+    // @todo cache
     function C( string $k , string $v ){
 
     }
 
-    function ddump( $v ){
-        var_dump($v);
-        die();
+    function dump($arg){
+        @header("Content-type:text/html;charset=utf-8");
+        echo '<pre>';
+        var_dump($arg);
+        echo '</pre>';
+    }
+    function ddump($arg){
+        @header("Content-type:text/html;charset=utf-8");
+        echo '<pre>';
+        var_dump($arg);
+        die('</pre>');
+    }
+    function json($arg){
+        @header("Content-type:text/json;charset=utf-8");
+        echo json_encode($arg);
+    }
+    function djson($arg){
+        @header("Content-type:text/json;charset=utf-8");
+        die(json_encode($arg));
+    }
+    function pre($arg){
+        @header("Content-type:text/html");
+        echo '<pre>';
+        print_r($arg);
+        echo('</pre>');
     }
 }
 
@@ -54,6 +85,8 @@ class Core {
             'ROUTER_KEY'   => 'r',
             'APP_NAME'     => 'app',
             'TABLE_PREFIX' => '',
+            'MYSQL_MASTER' => array(),
+            'MYSQL_SLAVES' => array(),
         );
         self::$config =  $config + $baseConfig;
     }
@@ -71,13 +104,12 @@ class Core {
     }
 
     private static function setRouter(){
-        $routeStr    = self::$request['r'];
         $finalRouter = array(
             'prefix' => array( self::$config['APP_NAME'] ),  //  controller 下的子模块目录，需要使用 namespace
             'module' => 'index',
             'method' => 'index'
         );
-        if( is_null( $routeStr )){
+        if( empty(self::$request['r']) ){
             self::$router = $finalRouter;
             return null;
         }
@@ -195,7 +227,7 @@ class Controller {
  */
 class ChainSqlModel {
 
-    private $operate     = array(
+    public $operate = array(
         'table'  => '',
         'prefix' => '',
         'field'  => '',
@@ -357,6 +389,7 @@ class ChainSqlModel {
 
             //  --->    执行 - 查找
             case 'find':
+                $this->limit(1);
                 $result = $this->findAll($arg ? $arg : array());
                 return (count($result) == 1) ? $result[0] : $result;
                 break;
@@ -396,6 +429,9 @@ class ChainSqlModel {
                 if (is_array($arg)) {
                     $this->operate['limit'] = implode(',', $arg);
                 }
+                if( is_int($arg) ){
+                    $this->operate['limit'] = '0,'.$arg;
+                }
                 if (is_string($arg) && !empty($arg)) {
                     $limit = explode(',', $arg);
                     if (count($limit) == 1) {
@@ -408,7 +444,7 @@ class ChainSqlModel {
                 $this->operate[$act] = $arg;
                 break;
         }
-
+        return $this;
     }
 }
 
@@ -417,11 +453,64 @@ class ChainSqlModel {
  */
 class MysqlModel extends ChainSqlModel{
 
-    public $link ;
+    private $link ;
+    function getLink( $config ){
+
+        if( empty($this->link) ){
+            $this->link = @mysqli_connect($config['host'], $config['username'], $config['password'], $config['dbname'], $config['port']);
+            if (!$this->link) {
+                die('Connect Error: ' . mysqli_connect_error());
+            }
+            mysqli_query($this->link,  'SET NAMES UTF8');
+        }
+        return $this->link;
+    }
+    function __destruct(){
+        if ( !empty($this->link) ) {
+            mysqli_close($this->link);
+        }
+    }
+    function getConfig( $sql ){
+
+        $master = Core::$config['MYSQL_MASTER'];
+        $slaves = Core::$config['MYSQL_SLAVES'];
+
+        if( substr($sql,0,6) === 'SELECT' ){
+            return $master;
+        }else{
+            $count = count( $slaves );
+            if( $count  === 0 ){
+                return $master;
+            }
+            return $slaves[ time() % $count ];
+        }
+    }
 
     function query( $sqlArray ){
-        $sqlStr =  implode(' ',array_filter($sqlArray)) ;
-        var_dump($sqlStr);
+        $sqlArr = array_filter($sqlArray);
+        $sqlStr = implode( ' ' , $sqlArr);
+        if( empty(!$this->operate['debugger']) ){
+            die( $sqlStr);
+        }
+        $config   = $this->getConfig( $sqlStr );
+        $link     = $this->getLink( $config );
+        $resource = mysqli_query($link, $sqlStr, MYSQLI_STORE_RESULT);
+
+        if( empty($resource)){
+            throw new Exception(mysqli_error($this->handle), 1);
+        }
+
+        $result = array();
+        while ($row = mysqli_fetch_assoc($resource)) {
+            $result[] = $row;
+        }
+        mysqli_free_result($resource);
+
+        return $result;
+
+    }
+    function lastId(){
+        return mysqli_insert_id($this->link);
     }
 }
 
